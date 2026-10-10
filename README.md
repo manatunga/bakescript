@@ -27,6 +27,7 @@ pour cook double with 5
 - [Roadmap](docs/ROADMAP.md) — proposed releases and long-term objectives.
 - [Architecture](docs/ARCHITECTURE.md) — planned compiler and VM design, without locking out future backends.
 - [Design decisions](docs/DESIGN_DECISIONS.md) — rationale and superseded choices.
+- [Technical backlog](docs/TECHINCAL_BACKLOG.md) - tracked technical objectives that have been deferred.
 
 ## Principles
 
