@@ -1,4 +1,4 @@
-# BakeScript Technical Backlog
+# GeeBreeze Technical Backlog
 
 **Status:** Living engineering decision register. This file records deferred work so that "later" always has a review point. A **review commitment** is not a commitment to implement a particular technology.
 
@@ -77,10 +77,10 @@ At each milestone review, inspect all items whose trigger has been reached. Reco
 ### TB-007 — CPython comparative performance
 
 - **Status:** Committed measurement program; performance parity is an ambition, not a guarantee.
-- **Current baseline:** No BakeScript measurements yet.
+- **Current baseline:** No GeeBreeze measurements yet.
 - **Reason for staging:** Correctness and comparable workloads must precede performance claims.
 - **First trigger:** First usable VM (target: v0.2.0), then repeat at each major runtime milestone.
-- **Review method:** Pin Go/BakeScript and CPython versions, hardware, inputs, warmup and iteration policy; compare equivalent implementations of loops, arithmetic, functions, strings, collections, and objects; report wall time, variance, and memory.
+- **Review method:** Pin Go/GeeBreeze and CPython versions, hardware, inputs, warmup and iteration policy; compare equivalent implementations of loops, arithmetic, functions, strings, collections, and objects; report wall time, variance, and memory.
 - **Decision criteria:** Use findings to prioritize optimization; do not infer overall parity from a single microbenchmark.
 - **Decision/evidence:** Pending.
 
@@ -127,3 +127,19 @@ Next review trigger (if deferred):
 ```
 
 Do not close an item solely because its target release number has passed; either review it or explicitly reschedule it with rationale.
+
+## TB-009 — Conversational-call grammar and built-in invocation
+
+- **Status:** Review required.
+- **Current baseline:** `call` is mandatory for user-defined invocation; older draft examples used `set()` and `int()` directly.
+- **Review trigger:** Before freezing the parser grammar / implementing expression parsing.
+- **Review method:** Test nested calls, built-in conversions, constructors, parentheses, variadics, method calls and operator precedence against a formal grammar and small corpus.
+- **Decision required:** Whether built-ins use `call`, have a narrow syntactic exception, or require a separate design.
+
+## TB-010 — Block scope, closures and deep immutability
+
+- **Status:** Review required.
+- **Current baseline:** Conditional/loop blocks introduce scopes; `outer` permits writes to captured variables; `fix` freezes nested values across aliases.
+- **Review trigger:** Before resolver, closure representation and mutable collection runtime implementation.
+- **Review method:** Write scoping and aliasing test matrices for shadowing, loop capture, early exit, uninitialized reads and mutation through references.
+- **Decision required:** Scope lifetime, captured-cell model and frozen object/value representation.
