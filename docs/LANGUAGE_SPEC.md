@@ -1,340 +1,268 @@
-# BakeScript Language Specification
+# GeeBreeze Language Specification
 
-**Status:** Draft design specification (pre-implementation)  
-**File extension:** `.bs`  
-**Implementation target:** Go  
-**Initial execution engine:** Bytecode VM
+**Status:** Draft, pre-implementation. Examples are illustrative, not executable yet.  
+**Working name:** GeeBreeze (availability and naming conflicts not fully verified)  
+**Provisional extension:** `.gbz` (formerly `.bs`)  
+**Implementation:** Go; initially a bytecode compiler and VM
 
-> This document describes intended behavior, not features already implemented.
-> **Decided** means explicitly chosen; **Provisional** means accepted as a working
-> default but not yet fully specified; **Open** means further design is required.
-> Examples are illustrative and are not yet executable.
+**Labels:** **Decided** = explicitly agreed syntax or intent; **Provisional** = accepted direction with details to formalize; **Open** = unresolved behavior.
 
 ## 1. Design philosophy [Decided]
 
-BakeScript uses Python-style significant indentation, lowercase keywords, and
-conversational English with selective cooking vocabulary. Avoid forcing a
-cooking metaphor onto conventional programming concepts when that reduces clarity.
+GeeBreeze is a general-purpose programming language with conversational, intuitive syntax and rigorous semantics. It is **not** unrestricted natural language. Favor natural, concise instructions without sacrificing precision or introducing forced metaphors. Significant indentation and `:` delimit blocks; keywords are lowercase.
 
 ## 2. Lexical structure
 
-- Significant indentation introduces suites after `:`. [Decided]
-- Keywords are lowercase. [Decided]
-- `#` begins a line comment. [Decided]
-- Single and double quotes delimit strings: `'text'`, `"text"`. [Decided]
-- Triple quotes delimit multiline strings; a triple-quoted string in a designated
-  documentation position can act as a docstring. [Decided; precise positions provisional]
-- Interpolated strings use `f"Hello {name}"` or `f'Hello {name}'`. [Decided]
-- Identifier rules, tabs versus spaces, Unicode normalization, numeric literal
-  formats, escapes, and indentation diagnostics remain to be specified. [Open]
+- `#` starts a comment. [Decided]
+- Strings use single or double quotes; triple quotes support multiline strings and docstrings. [Decided; docstring placement provisional]
+- Interpolation uses `f"Hello, {name}!"`. [Decided]
+- Identifier rules, Unicode handling, indentation errors, tabs, escapes, numeric literal syntax, and semicolon policy need formalization. [Open]
 
-## 3. Values and types
+## 3. Values and collections [Decided]
 
-| Concept | Syntax | Status |
-|---|---|---|
-| Boolean true | `fresh` | Decided |
-| Boolean false | `spoilt` | Decided |
-| Null-like value | `empty` | Decided |
-| Lists | `[1, 2, 3]` | Decided |
-| Dictionaries | `{"name": "Alex"}` | Decided |
-| Tuples | `(1, 2)` | Decided |
-| Sets | `{"a", "b"}` | Decided |
-| Empty set | `set()` | Decided |
+| Concept | Form |
+|---|---|
+| True / false / null-like | `true`, `false`, `nothing` |
+| List | `[1, 2, 3]` |
+| Insertion-ordered dictionary | `{"name": "Alex"}` |
+| Tuple | `(1, 2)` |
+| Set | `{"a", "b"}` |
+| Empty set | `set()` |
 
-`empty` is distinct from `0`, `""`, and `[]`. Dictionaries preserve insertion
-order; sets are unordered. [Decided]
+`nothing` differs from an uninitialized variable. Set/dictionary literal disambiguation and empty `{}` behavior require formal grammar. Numeric model, equality/hashing and identity remain open. Built-in constructors/conversions were previously written as `int("3")` and `set(items)`; their invocation relationship to mandatory `call` **requires review**, not silent grandfathering.
 
-Conventional constructors/conversions use parentheses, e.g. `int("3")` and
-`set(items)`, and are distinct from user-function invocation with `cook`. [Decided]
+## 4. Declarations, assignment, scope [Decided]
 
-Precise numeric types, overflow, hashing/equality, tuple grouping versus tuple
-construction, and object identity remain to be defined. [Open]
-
-## 4. Variables and assignment [Decided]
-
-```bakescript
-prep score as 10        # mutable declaration
-score as 20             # reassignment
-prep later              # declared but uninitialized
-later as 5
-freeze maximum as 100   # deeply immutable
+```text
+let score be 10
+score = 20
+score += 5
+let later
+let count: int
+let amount of type float
+later = 5
+fix maximum at 100
+fix pi: float at 3.14
+fix threshold of type int at 50
 ```
 
-Reading an uninitialized variable is an error; this is different from a
-variable explicitly holding `empty`. `freeze` prevents reassignment and nested
-mutation, including mutation through aliases. Exact enforcement mechanics are
-not yet specified.
+- `let` declares a mutable binding; `be` supplies its initializer.
+- `fix` declares a deeply immutable binding; `at` supplies its **required** initializer.
+- `=` reassigns; compound assignments such as `+=`, `-=`, `*=`, `/=` are supported.
+- `let` may be uninitialized; reading it before assignment is an error, distinct from holding `nothing`.
+- Static checking should detect possibly uninitialized reads when feasible; runtime checks actual invalid reads.
+- Function and conditional/loop blocks create lexical scopes. Assignment can update a binding in an enclosing scope; declaration creates a new binding in its scope.
+- Deep immutability prevents nested mutation through aliases; enforcement mechanics remain open.
 
-Duplicate `prep` declarations in the same scope are disallowed.
+## 5. Optional types [Decided]
 
-## 5. Optional types and checking [Decided]
+`name: Type` and `name of type Type` are equivalent. Types are optional; gradual static checking is planned. Both `giving Type` and `-> Type` annotate return types.
 
-Both annotation forms have identical meaning:
+```text
+to multiply with a: int, b of type int giving int:
+    give a * b
 
-```bakescript
-prep age of type int as 20
-prep score: int as 95
-
-to multiply with a of type int, b of type int -> int:
-    serve a * b
-
-to add with a: int, b: int -> int:
-    serve a + b
+to square with x: int -> int:
+    give x * x
 ```
 
-- `: Type` and `of type Type` are equivalent for variable declarations and
-  function parameters.
-- `-> Type` annotates a function's return type.
-- `as` remains the initializer/default-value syntax.
-- Annotations are optional. `bake check` performs gradual static checking.
-- Diagnostics are nonblocking by default, and annotations do not automatically
-  impose runtime type checks.
-- Grouped annotations such as `(a, b): int` are **not** currently part of the design.
-
-Type compatibility rules, generics, unions, and checker strictness are [Open].
+Checker strictness, inference, unions, generics, runtime enforcement and compatibility rules are open. Static diagnostics are intended to be nonblocking by default.
 
 ## 6. Expressions and operators
 
-| Category | Operators / forms | Status |
-|---|---|---|
-| Equality | `is`, `==` | Decided |
-| Inequality | `is not`, `!=` | Decided |
-| Ordering | `<`, `<=`, `>`, `>=` | Decided |
-| Logical AND | `and`, `&&` | Decided |
-| Logical OR | `or`, `||` | Decided |
-| Logical NOT | `not`, `!` | Decided |
-| Arithmetic | `+`, `-`, `*`, `/`, `//`, `%`, `**` | Decided |
-| Membership | `in`, `not in` | Provisional |
+| Category | Forms |
+|---|---|
+| Equality / inequality | `is`, `==`, `is not`, `!=` |
+| Ordering | `<`, `<=`, `>`, `>=` |
+| Logic | `and`, `&&`, `or`, `||`, `not`, `!` |
+| Arithmetic | `+`, `-`, `*`, `/`, `//`, `%`, `**` |
+| Membership | `in`, `not in` |
+| Grouping | `(expression)` |
 
-Logical operators short-circuit. `/` performs floating-point division
-(`4 / 2` yields `2.0`); `//` performs floor division (`-5 // 2` yields `-3`).
-Conventional operator precedence is the provisional default; its exact table
-still needs documenting.
+`is` means **value equality**, not object identity. Logical operators short-circuit. `/` is floating-point division; `//` floors (`-5 // 2` is `-3`). Exact precedence and operator behavior for custom types need specification.
 
-## 7. Conditionals [Decided, with `instead` spelling provisional]
+## 7. Branching [Decided]
 
-```bakescript
-taste temperature > 180:
-    pour "Hot"
-instead temperature > 100:
-    pour "Warm"
+```text
+if temperature > 180:
+    say "Hot"
+else if temperature > 100:
+    say "Warm"
 otherwise:
-    pour "Cool"
+    say "Cool"
 ```
 
-`instead` is the currently preferred `elif` keyword, but its spelling was
-previously marked provisional.
+## 8. Loops [Decided]
 
-## 8. Iteration [Decided]
+```text
+each fruit in fruits:
+    say fruit
 
-Collection iteration uses **`each`**, not `stir`:
+repeat 5 times:
+    say "Again"
 
-```bakescript
-each ingredient in ingredients:
-    pour ingredient
+repeat once:
+    say "Once"
+
+repeat twice:
+    say "Twice"
+
+repeat thrice:
+    say "Thrice"
+
+while temperature < 180:
+    temperature += 10
+
+until ready:
+    say "Waiting"
 ```
 
-Fixed-count repetition uses `stir`:
+`while` runs while true; `until` runs while false. `skip` continues and `stop` breaks the innermost loop. Repeat-count evaluation, mutation during iteration, iterator protocol, and zero/negative counts need precise rules.
 
-```bakescript
-stir once:
-    pour "One"
+## 9. Functions, calls and closures [Decided unless noted]
 
-stir twice:
-    pour "Two"
-
-stir thrice:
-    pour "Three"
-
-stir 5 times:
-    pour "Five"
-
-stir (2 * 3) times:
-    pour "Six"
-```
-
-Conditional repetition uses pre-test `until`: execute while its condition is
-false, stop once true.
-
-```bakescript
-prep temperature as 100
-until temperature >= 180:
-    temperature as temperature + 10
-```
-
-`skip` continues the loop; `stop` breaks it. Fixed-repeat evaluation timing,
-iteration mutation rules, and iterator protocol are [Open].
-
-**Superseded:** `stir item in collection:` is retired. Use `each item in collection:`.
-
-## 9. Functions, calls, and scope
-
-```bakescript
+```text
 to greet with name as "Guest":
-    pour f"Hello, {name}!"
+    say f"Hello, {name}!"
 
-to square with x:
-    serve x * x
+to add with a: int, b: int giving int:
+    give a + b
 
-cook greet
-cook greet with "Alex"
-cook greet with name as "Alex"
+call greet
+call greet with "Alex"
+call greet with name as "Alex"
+let result be call add with 2, 3
+let fn be add
 
-prep result as cook square with 5
-prep fn as square
+let double be with x give x * 2
 ```
 
-- Declare with `to`, call with `cook`, return with `serve`. [Decided]
-- No-argument declarations/calls omit `with`. [Decided]
-- Positional arguments precede named arguments. [Decided]
-- Default parameters use `as`. [Decided]
-- `*values` captures positional varargs as a tuple; `**options` captures
-  named arguments as a dictionary. Unpacking in calls is supported. [Decided]
-- Functions are first-class and support lexical closures. [Decided]
-- `lambda x: x * 2` is a provisional anonymous-function form.
-- Functions have lexical scopes; conditional/loop blocks do not introduce
-  separate scopes. `prep` inside a function shadows an outer variable.
-  `outer name` enables assignment to an enclosing variable. [Decided]
-- Recursion is supported; a function without `serve` implicitly returns
-  `empty`. [Provisional]
+- `to` declares; `call` invokes; `give` returns. Bare `give` returns without a value; a function falling through returns `nothing` [Provisional].
+- `with` introduces parameters or arguments; omitted for zero-argument functions.
+- Default parameters use `as`; named arguments use `name as value`.
+- Positional arguments precede named arguments.
+- Functions are first-class; referencing `add` does **not** call it.
+- Lexical closures capture outer bindings. `outer count` marks intention to mutate a captured variable; reads need no `outer`.
+- Variadic positional parameter `...items` collects a list; `...numbers: int` constrains each element.
+- Variadic named parameter `named ...options` collects a dictionary.
+- Unpacking: `call sum with ...values` and `call configure with named ...options`.
+- Parameter order: required, defaulted, positional variadic, named variadic.
+- Recursion supported.
 
-Call-expression precedence and complex combinations of named/default/varargs
-arguments require formal grammar work. [Open]
+### Grouped nested calls [Decided]
 
-## 10. Collections, indexing, and mutation
-
-Both conventional and conversational indexing are supported:
-
-```bakescript
-prep first as items[0]
-prep also_first as items at 0
-prep middle as items[1:3]
-prep other_middle as slice items from 1 to 3
-prep beginning as slice items to 2
-prep ending as slice items from 2
+```text
+call display with (call calculate with 10, 20), 30
+let result be (10 + 5) * 2
 ```
 
-Indexing is zero-based; slice ends are exclusive. `[start:stop:step]` is a
-provisional extension.
+Parentheses disambiguate nested calls and expression grouping. The exact parser boundary for unparenthesized calls, anonymous-function precedence, and builtin call forms remains **Open**.
 
-```bakescript
-pour size of items
-toss "Butter" into items
-pluck "Sugar" from items
-dispose "Flour" from items
+## 10. Collections, indexing and mutation
+
+```text
+let first be items[0]
+let also_first be items at 0
+let middle be items[1:3]
+let other_middle be slice items from 1 to 3
+say size of items
+
+add "orange" to fruits
+remove "banana" from fruits
+remove every "apple" from fruits
 ```
 
+- Zero-based indexing; slices end-exclusive. `[start:stop:step]` retained provisionally.
 - `size of` returns length.
-- `toss` appends to a list.
-- `pluck` removes the first matching value.
-- `dispose` removes all matching values.
-- Both removal forms error if no match exists; list order is preserved.
+- `add value to collection` adds an element; initially specified for lists as append.
+- `remove value from collection` removes the first matching occurrence.
+- `remove every value from collection` removes all matching occurrences.
+- Previous behavior that removal with no match errors is retained **provisionally**, pending collection-specific error rules.
+- Other collection types' `add`/`remove` semantics remain open.
+- `slice items from 1 to 3` and other conversational indexing forms are retained from the original draft.
 
-Other conventional collection/string operations are provisionally accepted
-but not individually specified.
+## 11. Classes and inheritance [Decided syntax]
 
-## 11. Classes and inheritance [Decided]
-
-```bakescript
-menu Recipe:
+```text
+define Person:
     to setup with name:
-        my.name as name
+        my.name = name
 
-    to describe:
-        pour my.name
+    to greet:
+        say f"Hello, I'm {my.name}!"
 
-menu Cake based on Recipe:
-    to describe:
-        cook parent.describe
-        pour "Cake!"
+define Student from Person:
+    to setup with name, school:
+        call parent.setup with name
+        my.school = school
 
-prep cake as order Cake with "Chocolate"
-cook cake.describe
-cook describe of cake
-pour cake.name
-pour name of cake
+let student be create Student with "Alex", "IIT"
+call student.greet
+say student.name
 ```
 
-- `menu` declares a class; `order` instantiates it.
-- `setup` is automatically called on construction.
-- `my` is implicit instance access; no explicit `self` parameter.
-- `menu Child based on Parent:` declares inheritance.
-- `cook parent.describe` and `cook describe from parent` are parent-call forms.
-- Dot and conversational `of` access are both supported.
-- Members are public by default; overriding/inheritance details remain
-  provisional.
+`define` declares a class; `define Child from Parent:` expresses inheritance. `create` constructs an instance and calls `setup`. `my` denotes the current instance; `parent` accesses inherited behavior. Dot member access is supported. Previously accepted `name of object` access is retained **provisionally** pending a grammar audit. Public-by-default members and overriding are provisional; MRO, class attributes, initialization and multiple inheritance are open.
 
-Method resolution, multiple inheritance, class versus instance attributes,
-and initializer chaining remain [Open].
+## 12. Errors [Decided syntax]
 
-## 12. Errors [Decided; some details provisional]
-
-```bakescript
-attempt:
-    burn "Something went wrong"
-rescue error:
-    pour error
+```text
+try:
+    raise "Something went wrong"
+catch error:
+    say error
 always:
-    pour "Cleanup"
+    say "Cleanup"
 ```
 
-`burn` raises an error. `attempt`/`rescue`/`always` provide error handling.
-`always` runs even when control exits via `serve`, `stop`, or `skip`.
-Typed exceptions and propagation are provisional; exception hierarchy and
-matching grammar remain [Open].
+`raise` raises an error; `try` / `catch` / `always` handle errors and cleanup. `always` runs on normal and exceptional exits, including `give`, `skip`, and `stop` (subject to runtime termination rules). Typed catches, hierarchy, matching, rethrow and propagation remain open.
 
-## 13. Modules [Decided; resolution details provisional]
+## 13. Modules [Decided syntax]
 
-```bakescript
-grab maths
-grab square, cube from maths
-grab mathematics as maths
-grab square as sq from mathematics
-grab recipes.cakes
+```text
+bring maths
+bring square, cube from maths
+bring mathematics as maths
+bring square as sq from mathematics
+bring recipes.cakes
 ```
 
-Every `.bs` file is a module. Relative imports and circular import behavior
-are provisionally Python-like, but exact resolution rules are [Open].
+Each `.gb` source file is intended as a module. Import aliases use `as`; inheritance and imports both use `from` in unambiguous contexts. Relative/circular imports and module initialization remain provisional pending precise resolution rules.
 
-## 14. Input, output, and built-ins [Decided]
+## 14. Input/output and standard library
 
-```bakescript
-pour "Hello"
-prep name as sip "Your name: "
-prep answer as sip
+```text
+say "Hello"
+let name be ask "Your name: "
+let answer be ask
 ```
 
-`pour` outputs a value. `sip` is an input expression with an optional prompt.
-Precise formatting, newline behavior, and EOF handling are [Open].
-
-Basic math, files, dates, and JSON standard-library modules are planned
-[Provisional].
+`say` outputs; `ask` reads input with optional prompt. Exact newline, formatting and EOF behavior are open. Math, files, dates and JSON modules are planned.
 
 ## 15. Tooling [Provisional]
 
-- `bake run` — execute programs.
-- `bake check` — static analysis and type diagnostics.
-- `bake fmt` — format source.
-- `bake` REPL — interactive execution.
+```text
+geebreeze run hello.gb
+geebreeze check hello.gb
+geebreeze fmt hello.gb
+geebreeze build hello.gb
+geebreeze
+```
 
-CLI flags, exit codes, and formatter style remain [Open].
+`run`, `check`, `fmt` and REPL are planned. `build` is a **future-facing placeholder**, not a promise that native compilation is present in the initial VM release. CLI behavior and packaging are open.
 
-## 16. Compatibility and implementation independence
+## 16. Implementation independence and compatibility
 
-This specification defines BakeScript semantics, not a particular backend.
-The first implementation targets a Go-based bytecode VM; future interpreters,
-JITs, AOT compilers, or other backends may implement the same semantics.
-Internal bytecode is **not** promised as a stable public format at this stage.
+The initial backend is a Go-based stack bytecode VM, but syntax/semantics should not depend on that implementation. A register VM review is required after the first working VM and benchmark harness (target around v0.2.0). JIT, AOT, Wasm and concurrency research remain tracked separately in `TECHNICAL_BACKLOG.md`. CPython-level performance or better is an **aspiration, not a claim**. Internal bytecode is not a stable public contract.
 
-## 17. Outstanding design questions
+## 17. Open grammar and semantics work
 
-1. Formal grammar, precedence table, and indentation/tokenization rules.
-2. Exact numerical model, integer overflow, and floating-point behavior.
-3. Value identity, equality, hashability, and deep-freeze aliasing.
-4. Function argument binding and call-expression grammar.
-5. Iterator protocol, collection mutation during iteration, and loop scoping.
-6. Class inheritance and method-resolution semantics.
-7. Exception taxonomy and rescue matching.
-8. Module import resolution and initialization.
-9. Standard library APIs and user-facing diagnostics.
-10. Stability policy for syntax before and after 1.0.
+1. Formal EBNF/Pratt grammar, precedence, nested calls and constructors.
+2. Block-scoped declarations, assignment resolution and `outer` edge cases.
+3. Collection literals, identity, equality, hashing, numeric model and deep immutability.
+4. Typed/default/variadic argument binding and evaluation order.
+5. Iterators, slice variants and collection mutation/error rules.
+6. Class initialization, inherited member lookup, `of` member syntax and method resolution.
+7. Exception taxonomy, typed matching and cleanup control-flow precedence.
+8. Module initialization, relative imports, circular imports and packaging.
+9. String interpolation/escaping, Unicode and diagnostics.
+10. CLI, stdlib, formatter and version stability.
