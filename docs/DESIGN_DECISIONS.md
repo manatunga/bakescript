@@ -1,53 +1,60 @@
-# BakeScript Design Decisions
+# GeeBreeze Design Decisions
 
-A lightweight decision log. **Decided** means an explicit current choice;
-**Provisional** means a working assumption that may be revised.
+**Status:** Pre-implementation design log. **Decided** means agreed direction or syntax, not implemented; **Provisional** requires additional specification.
 
-| ID | Status | Decision | Reason / note |
-|---|---|---|---|
-| D-001 | Decided | Implement BakeScript in Go | Standalone tooling, native compiled runtime, room to optimize |
-| D-002 | Decided | `.bs` extension and significant indentation | Concise, readable programs |
-| D-003 | Decided | Conversational syntax with selective cooking vocabulary | Distinct identity without forcing metaphors |
-| D-004 | Decided | `prep` mutable declaration, `freeze` deep immutability, `as` assignment/default | Readable data operations |
-| D-005 | Decided | `fresh`, `spoilt`, `empty` | Language-specific value vocabulary |
-| D-006 | Decided | `taste` / `otherwise` conditionals; `instead` currently provisional | Natural branching |
-| D-007 | Decided | `each item in collection:` for iteration | More intuitive than `stir item in collection:` |
-| D-008 | Decided | `stir N times:` and `stir once/twice/thrice:` for fixed repetition | `stir` suits counted repetition |
-| D-009 | Decided | `until condition:` for conditional repetition | Clear stop condition |
-| D-010 | Decided | `to` declaration, `cook` call, `serve` return | Consistent conversational function syntax |
-| D-011 | Decided | Optional `of type Type` and `: Type` annotations | Expressive and compact forms are equivalent |
-| D-012 | Decided | `-> Type` return annotation; `as` for defaults | Avoid type/default ambiguity |
-| D-013 | Decided | Gradual static checking, nonblocking by default | Preserve dynamic execution |
-| D-014 | Decided | `menu`, `order`, implicit `my` for objects | Cooking identity in OO constructs |
-| D-015 | Decided | `attempt`/`rescue`/`always`, `burn` | Error handling vocabulary |
-| D-016 | Decided | `grab` for module imports | Short, readable imports |
-| D-017 | Decided | Initial Go bytecode compiler and VM | Good balance of control, performance potential, and complexity |
-| D-018 | Decided | Execution backends remain replaceable/extensible | VM is implementation strategy, not permanent restriction |
-| D-019 | Decided | SemVer-inspired versioning | Compatible minors/patches after 1.0; majors for breaking changes |
-| D-020 | Decided | CPython parity or better is a long-term performance ambition | Benchmark-driven engineering target, not a guarantee |
-| D-021 | Provisional | Python-like behavior for several edge cases | Needs explicit specification before compatibility promises |
-
-## Superseded proposals
-
-| Old proposal | Replacement | Reason |
+| ID | Status | Current decision |
 |---|---|---|
-| `stir item in collection:` | `each item in collection:` | `stir` feels ambiguous for iteration |
-| Only `name of type Type` | Also allow `name: Type` | Reduce verbosity |
-| `drop` for loop break | `stop` | Current preferred control-flow word |
+| D-001 | Decided | Implement in Go; initially lexer → parser → bytecode compiler → VM |
+| D-002 | Provisional | Working name GeeBreeze, CLI `geebreeze`, extension `.gb`; check conflicts |
+| D-003 | Decided | Conversational, concise, rigorous, general-purpose; culinary theme retired |
+| D-004 | Decided | Significant indentation, `:`, lowercase keywords, `#` comments |
+| D-005 | Decided | Mutable `let x be value`; optional uninitialized `let x`; assignment `=` |
+| D-006 | Decided | Deep immutable `fix x at value`; nested/alias mutation prohibited |
+| D-007 | Decided | `true`, `false`, `nothing`; conventional collection literals |
+| D-008 | Decided | Optional `: Type` / `of type Type`; gradual checking |
+| D-009 | Decided | Return annotations `giving Type` / `-> Type` |
+| D-010 | Decided | `if` / `else if` / `otherwise`; block scope |
+| D-011 | Decided | `each`, `repeat`, `while`, `until`; `skip` / `stop` |
+| D-012 | Decided | `to` declaration, `call` invocation, `give` return, defaults with `as` |
+| D-013 | Decided | `...items`, `named ...options`, lexical closures, `outer` |
+| D-014 | Decided | Anonymous expression function `with x give x * 2` |
+| D-015 | Decided | Parentheses for grouping and nested calls |
+| D-016 | Decided | `define` class, `from` inheritance, `setup`, `create`, `my`, `parent` |
+| D-017 | Decided | `raise` / `try` / `catch` / `always` |
+| D-018 | Decided | `bring` for imports; aliases with `as` |
+| D-019 | Decided | `say` output; `ask` input |
+| D-020 | Decided | `add`, `remove`, `remove every` collection operations |
+| D-021 | Decided | `is`/`==` value equality; `is not`/`!=`; logical word/symbol aliases |
+| D-022 | Decided | Stack VM first; mandatory register-VM comparison after working VM/benchmarks |
+| D-023 | Provisional | CPython parity or better is a long-term benchmark target, not a guarantee |
+| D-024 | Provisional | Backend extensibility, SemVer-inspired versioning, standard library |
+| D-025 | Provisional | Preserve prior indexing/slicing alternatives and public-by-default members |
+| D-026 | Open | Built-in `set()` / `int()` invocation versus mandatory `call` |
+| D-027 | Open | Precise grammar, evaluation order, typing, errors, modules, class MRO |
 
-## Not adopted for now
+## Superseded syntax (historical record)
 
-- Grouped parameter type shorthand `(a, b): int`.
-- A mandatory second execution backend in the initial release.
-- A comprehensive multi-backend IR before a second backend is justified.
+| Original BakeScript | GeeBreeze replacement |
+|---|---|
+| `prep x as 1`, `x as 2` | `let x be 1`, `x = 2` |
+| `freeze x as 1` | `fix x at 1` |
+| `fresh`, `spoilt`, `empty` | `true`, `false`, `nothing` |
+| `taste`, `instead`, `otherwise` | `if`, `else if`, `otherwise` |
+| `stir 3 times` | `repeat 3 times` |
+| `pour`, `sip` | `say`, `ask` |
+| `cook greet`, `serve x` | `call greet`, `give x` |
+| `*args`, `**kwargs` | `...args`, `named ...kwargs` |
+| `lambda x: x * 2` | `with x give x * 2` |
+| `menu Person`, `menu Child based on Parent` | `define Person`, `define Child from Parent` |
+| `order Person with ...` | `create Person with ...` |
+| `my.x as value` | `my.x = value` |
+| `burn`, `attempt`, `rescue`, `always` | `raise`, `try`, `catch`, `always` |
+| `grab maths` | `bring maths` |
+| `toss`, `pluck`, `dispose` | `add`, `remove`, `remove every` |
+| `bake` CLI, `.bs` | Provisional `geebreeze` CLI, `.gb` |
 
-## Maintaining this log
+**Unchanged unless a conflict arises:** `each`, `until`, `skip`, `stop`, `size of`, `at` indexing, bracket indexing/slicing, `slice ... from ... to ...`, `setup`, `my`, `parent`, dotted members, named/default arguments, lexical closures, first-class functions, optional annotations, and the technical backlog.
 
-When a decision changes:
-1. Update the language specification.
-2. Record the old and new form here, with a brief rationale.
-3. Update relevant examples and tests.
-4. If public behavior is affected, assess version compatibility.
+## Change process
 
-This log intentionally preserves the difference between decisions explicitly
-settled in discussion and provisional defaults accepted to keep design moving.
+When a decision changes, update the specification, this log, examples, and relevant implementation tests. Do not treat provisional semantics as settled merely because an example uses them.
