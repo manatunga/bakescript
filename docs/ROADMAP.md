@@ -1,10 +1,10 @@
-# BakeScript Roadmap
+# GeeBreeze Roadmap
 
-**Status:** Aspirational planning document, not a release commitment.
+**Status:** Aspirational planning document, not a release commitment. GeeBreeze is a provisional name.
 
 ## Release philosophy
 
-BakeScript uses Semantic Versioning as a guideline:
+GeeBreeze uses Semantic Versioning as a guideline:
 
 - `MAJOR`: incompatible public language/API changes after 1.0.
 - `MINOR`: backward-compatible new capabilities after 1.0.
@@ -20,9 +20,9 @@ An internal bytecode format is not currently part of the public compatibility co
 | Release | Theme | Demonstrable milestone |
 |---|---|---|
 | `0.1.0` | Frontend foundations | Lexer, parser, AST, syntax diagnostics, basic CLI |
-| `0.2.0` | First execution | Bytecode compiler and VM; values, arithmetic, variables, `pour` |
-| `0.3.0` | Control flow | `taste`/`instead`/`otherwise`, `each`, `stir`, `until`, `skip`, `stop` |
-| `0.4.0` | Functions | `to`, `cook`, `serve`, recursion, local scope |
+| `0.2.0` | First execution | Bytecode compiler and VM; values, arithmetic, variables, `say` |
+| `0.3.0` | Control flow | `if`/`else if`/`otherwise`, `each`, `repeat`, `while`, `until`, `skip`, `stop` |
+| `0.4.0` | Functions | `to`, `call`, `give`, recursion, local scope |
 | `0.5.0` | Advanced functions | Closures, defaults, named arguments, varargs |
 | `0.6.0` | Collections | Lists, maps, tuples, sets, indexing, slicing |
 | `0.7.0` | Objects | `menu`, `order`, `my`, methods, inheritance |
@@ -93,3 +93,7 @@ CPython parity is a **goal**, not a release promise or guaranteed outcome.
 - [ ] Write token and indentation tests.
 - [ ] Implement scanner, then parser, then bytecode compiler/VM.
 - [ ] Maintain the specification and design log alongside code changes.
+
+## Syntax-redesign integration gate
+
+Before lexer/parser implementation, produce a minimal formal grammar and executable-looking conformance examples for `let`/`fix`, block scopes, nested `call` expressions, `define`/`create`, `bring`, errors, and collections. Decide how built-in constructors are invoked. Preserve the original performance and backend-review milestones; the redesign does not imply that those capabilities are already built.
