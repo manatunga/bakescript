@@ -5,7 +5,7 @@
 | ID | Status | Current decision |
 |---|---|---|
 | D-001 | Decided | Implement in Go; initially lexer → parser → bytecode compiler → VM |
-| D-002 | Provisional | Working name GeeBreeze, CLI `geebreeze`, extension `.gb`; check conflicts |
+| D-002 | Provisional | Working name GeeBreeze, CLI `geebreeze`, extension `.gbz`; check conflicts |
 | D-003 | Decided | Conversational, concise, rigorous, general-purpose; culinary theme retired |
 | D-004 | Decided | Significant indentation, `:`, lowercase keywords, `#` comments |
 | D-005 | Decided | Mutable `let x be value`; optional uninitialized `let x`; assignment `=` |
