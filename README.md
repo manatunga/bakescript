@@ -2,9 +2,9 @@
 
 **GeeBreeze** is a proposed general-purpose programming language with conversational, intuitive syntax and precise semantics. The language is planned to be implemented from scratch in **Go**, starting with a bytecode compiler and VM.
 
-> **Status:** Design / pre-implementation. GeeBreeze is a **provisional name**, pending availability and naming-conflict checks. The `.gb` extension and `geebreeze` command are also provisional. None of the examples below are executable yet.
+> **Status:** Design / pre-implementation. GeeBreeze is a **provisional name**, pending availability and naming-conflict checks. The `.gbz` extension and `geebreeze` command are also provisional. None of the examples below are executable yet.
 
-```text
+```geebreeze
 bring square from maths
 
 fix greeting at "Hello"
