@@ -1,11 +1,11 @@
-# BakeScript Architecture
+# GeeBreeze Architecture
 
-**Status:** Proposed architecture; no production implementation is implied.
+**Status:** Proposed architecture; no production implementation is implied. Name and `.gbz` extension are provisional.
 
 ## Initial execution pipeline
 
 ```text
-Source (.bs)
+Source (.gbz)
     |
     v
 Lexer / indentation handling
@@ -29,7 +29,7 @@ Go-based stack VM
 Program execution
 ```
 
-A static checker (`bake check`) may share the frontend but must not be required
+A static checker (`geebreeze check`) may share the frontend but must not be required
 for normal execution by default.
 
 ## Responsibilities
@@ -43,7 +43,7 @@ for normal execution by default.
 | Compiler | Convert validated AST to VM instructions |
 | VM | Execute instructions, manage frames and stack |
 | Runtime | Values, collections, functions, objects, errors, built-ins |
-| CLI | `bake run`, `bake check`, `bake fmt`, REPL |
+| CLI | `geebreeze run`, `geebreeze check`, `geebreeze fmt`, REPL |
 
 ## VM direction
 
@@ -80,7 +80,7 @@ No particular speedup over CPython is assumed.
 
 ## Backend independence
 
-**The bytecode VM is the initial backend, not BakeScript's identity.**
+**The bytecode VM is the initial backend, not GeeBreeze's identity.**
 
 Possible future architecture:
 
@@ -100,7 +100,7 @@ This is conceptual. A shared IR may become useful if multiple backends are
 actually pursued; **do not build an elaborate multi-backend IR for v0.1**.
 
 Keep parsing and language semantics separate from VM-specific machinery so
-future backends can be added without redefining BakeScript's behavior.
+future backends can be added without redefining GeeBreeze's behavior.
 
 ## Compatibility boundaries
 
@@ -119,3 +119,7 @@ future backends can be added without redefining BakeScript's behavior.
 - Deep immutability enforcement.
 - Debug information and source maps.
 - Whether/when to introduce a backend-neutral IR.
+
+## Updated language/frontend implications
+
+The frontend must parse block-scoped `let`/`fix` declarations, `call ... with ...` expressions, `with ... give ...` closures, `outer` capture writes, and `define`/`create` objects. Explicit parentheses resolve ambiguous nested calls. Runtime must distinguish uninitialized bindings from `nothing` and enforce deep immutability across aliases. Built-in call syntax and the full grammar remain open; see `LANGUAGE_SPEC.md`.`define`/`create` objects. Explicit parentheses resolve ambiguous nested calls. Runtime must distinguish uninitialized bindings from `nothing` and enforce deep immutability across aliases. Built-in call syntax and the full grammar remain open; see `LANGUAGE_SPEC.md`.
