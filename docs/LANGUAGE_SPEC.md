@@ -76,25 +76,25 @@ for each name in names:
 repeat 3 times:
     say "Again"
 
-repeat while ready is false:
-    skip
+repeat while attempts is less than 3:
+    change attempts to attempts + 1
 
 repeat until ready:
     stop
 ```
 
-`repeat while` and `repeat until` test their condition before each iteration. `stop` exits the innermost loop; `skip` continues to its next iteration. Collection mutation during iteration and repeat-count edge cases remain provisional.
+In this example, `attempts` and `ready` are assumed to have been declared earlier. `repeat while` and `repeat until` test their condition before each iteration. `stop` exits the innermost loop; `skip` continues to its next iteration. Collection mutation during iteration and repeat-count edge cases remain provisional.
 
 ## 7. Functions [Decided]
 
 ```elq
-to calculate_total with (price as Float, quantity as Int) giving Float:
+to calculate_total with (price as Float, quantity as Float) giving Float:
     give price * quantity
 
 to greet with (name as String, excited as Bool be false):
     say "Hello, {name}!"
 
-let total be calculate_total with (20.0, 3)
+let total be calculate_total with (20.0, 3.0)
 greet with (name be "Alex")
 greet with ("Alex", excited be true)
 ```
@@ -109,7 +109,7 @@ First-class functions, closures, variadics and generics require further specific
 let names be ["Alice", "Bob", "Charlie"]
 say item at 0 in names
 say item at -1 in names
-say find item at 99 in names
+let missing_name as String? be find item at 99 in names
 say slice of names from 0 to 2
 say size of names
 add "Dana" to names
@@ -118,10 +118,10 @@ remove all "Alice" from names
 
 let data be {"name": "Alex"}
 say value for "name" in data
-say find value for "missing" in data
-add key "age" with value 20 to data
-change value for "age" in data to 21
-remove key "age" from data
+let missing_value as String? be find value for "missing" in data
+add key "city" with value "Colombo" to data
+change value for "city" in data to "Kandy"
+remove key "city" from data
 ```
 
 Indexing is zero-based; negative indices count backward from the end (`-1` is last). Slices include the start and exclude the end. Direct out-of-range indexing raises `IndexOutOfRange`; missing map keys raise `KeyNotFound`. `find` variants return an optional result (`none` when absent). List removal removes the first matching element; `remove all` removes all matches. Map equality is independent of entry order. String concatenation uses `+`; `size of` and slicing apply to strings as well. Unicode character versus grapheme indexing details remain provisional.

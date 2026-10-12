@@ -32,8 +32,8 @@
 | D-022 | Decided | Stack VM first; revisit register VM only with a functioning benchmarked baseline. |
 | D-023 | Provisional | CPython parity is an aspirational benchmark, not a guarantee. |
 | D-024 | Provisional | Backend extensibility, standard library, packaging, and post-1.0 compatibility policy require further work. |
-| D-025 | Decided | Zero-based indexing, negative indices from the end, end-exclusive slices, and typed failures for invalid direct access. |
-| D-026 | Decided | `Int` is checked signed 64-bit; `Float` is IEEE 754 binary64; display shortest round-trippable decimal; no automatic rounding; implicit numeric promotion only when provably exact. |
+| D-025 | Decided | Zero-based indexing, negative indices from the end, end-exclusive slices, and typed failures for invalid direct access. Unicode indexing units remain provisional. |
+| D-026 | Decided | `Int` is checked signed 64-bit; `Float` is IEEE 754 binary64; display shortest round-trippable decimal; no automatic rounding; implicit numeric promotion only when provably exact. Conversion edge cases remain provisional. |
 | D-027 | Decided | `/` performs real division; `//` floors; `%` uses floor-compatible remainder. Division by zero fails. |
 | D-028 | Decided | Lists, maps, and custom structured values have logical value semantics. Copy-on-write/structural sharing may implement this without observable aliasing. |
 | D-029 | Deferred | Explicit references, shared mutable state, and concurrency syntax are designed together later. |
