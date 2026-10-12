@@ -1,268 +1,200 @@
 # Eloque Language Specification
 
-**Status:** Draft, pre-implementation. Examples are illustrative, not executable yet.  
-**Working name:** Eloque (availability and naming conflicts not fully verified)  
-**Provisional extension:** `.elq` (formerly `.bs`)  
-**Implementation:** Go; initially a bytecode compiler and VM
+**Status:** Pre-implementation design draft, revised October 2026. Examples are illustrative, not executable.  
+**Working name / CLI / extension:** Eloque / `eloque` / `.elq` (naming checks remain pending).  
+**Implementation direction:** Go frontend, static checker, bytecode compiler, stack-based VM.
 
-**Labels:** **Decided** = explicitly agreed syntax or intent; **Provisional** = accepted direction with details to formalize; **Open** = unresolved behavior.
+**Status labels:** **Decided** means an agreed language rule, not an implemented feature; **Provisional** means the broad direction is accepted but edge cases remain; **Deferred** means not part of the initial executable subset. This document describes the *target language*, not a promise that every feature ships in v0.1.0.
 
-## 1. Design philosophy [Decided]
+## 1. Principles [Decided]
 
-Eloque is a general-purpose programming language with conversational, intuitive syntax and rigorous semantics. It is **not** unrestricted natural language. Favor natural, concise instructions without sacrificing precision or introducing forced metaphors. Significant indentation and `:` delimit blocks; keywords are lowercase.
+Eloque is a general-purpose programming language with structured conversational syntax, not unrestricted natural-language parsing. It prioritizes novice readability, unambiguous static semantics and machine-readable diagnostics for AI-assisted development, and a foundation for safe native concurrency. Prefer concise, regular grammar over excessive English verbosity. Execution is deterministic subject to explicit external inputs and eventual concurrency semantics.
 
-## 2. Lexical structure
+## 2. Lexical rules [Decided]
 
-- `#` starts a comment. [Decided]
-- Strings use single or double quotes; triple quotes support multiline strings and docstrings. [Decided; docstring placement provisional]
-- Interpolation uses `f"Hello, {name}!"`. [Decided]
-- Identifier rules, Unicode handling, indentation errors, tabs, escapes, numeric literal syntax, and semicolon policy need formalization. [Open]
+- Significant indentation: **four spaces per level**; tabs are invalid. A `:` introduces an indented block. Blank and comment-only lines do not affect indentation.
+- One statement per logical line; implicit continuation within `(...)`, `[...]`, `{...}`.
+- `#` starts a line comment outside a string.
+- Identifiers use ASCII letters, digits, and `_`, cannot start with a digit, and are case-sensitive. Reserved keywords cannot be identifiers. Snake_case is the recommended naming convention.
+- Strings use double quotes and support escapes and `{expression}` interpolation. Precise escaping and Unicode grapheme rules remain to be specified.
+- Multiword operators are parsed from individual keyword tokens, e.g. `is greater than`.
 
-## 3. Values and collections [Decided]
+## 3. Types and literals [Decided unless noted]
 
-| Concept | Form |
-|---|---|
-| True / false / null-like | `true`, `false`, `nothing` |
-| List | `[1, 2, 3]` |
-| Insertion-ordered dictionary | `{"name": "Alex"}` |
-| Tuple | `(1, 2)` |
-| Set | `{"a", "b"}` |
-| Empty set | `set()` |
+| Type | Meaning | Examples |
+|---|---|---|
+| `Int` | Signed 64-bit integer; checked overflow | `42`, `-7` |
+| `Float` | IEEE 754 binary64 | `3.14`, `0.5` |
+| `String` | Immutable Unicode text, stored as UTF-8 | `"Hello"` |
+| `Bool` | Exactly `true` or `false` | `true` |
+| Optional `T?` | Value of type `T` or absence | `String?` |
 
-`nothing` differs from an uninitialized variable. Set/dictionary literal disambiguation and empty `{}` behavior require formal grammar. Numeric model, equality/hashing and identity remain open. Built-in constructors/conversions were previously written as `int("3")` and `set(items)`; their invocation relationship to mandatory `call` **requires review**, not silent grandfathering.
+`none` is the absence literal, valid in optional contexts; it is not a general substitute for a non-optional value. `List[T]`, `Map[K, V]`, and user-defined types are statically checked. Literal examples: `[1, 2, 3]`, `{"name": "Alex"}`. Tuple and set types are **deferred**, not established core syntax.
 
-## 4. Declarations, assignment, scope [Decided]
+- Integer overflow raises `IntegerOverflow`; integer division by zero raises an error.
+- Float arithmetic is approximate; use the shortest round-trippable decimal when displaying a Float. Rounding is explicit.
+- Implicit `Int` to `Float` promotion is permitted only when exactness can be established. Precise rules for value-dependent conversions and Float exceptional values remain provisional.
+- No implicit truthiness; conditions require `Bool`.
 
-```text
-let score be 10
-score = 20
-score += 5
-let later
-let count: int
-let amount of type float
-later = 5
-fix maximum at 100
-fix pi: float at 3.14
-fix threshold of type int at 50
+## 4. Bindings, mutability, scope [Decided]
+
+```elq
+let age be 20
+change age to 21
+let fixed max_attempts as Int be 3
+let frozen names as List[String] be ["Alice", "Bob"]
+let nickname as String? be none
 ```
 
-- `let` declares a mutable binding; `be` supplies its initializer.
-- `fix` declares a deeply immutable binding; `at` supplies its **required** initializer.
-- `=` reassigns; compound assignments such as `+=`, `-=`, `*=`, `/=` are supported.
-- `let` may be uninitialized; reading it before assignment is an error, distinct from holding `nothing`.
-- Static checking should detect possibly uninitialized reads when feasible; runtime checks actual invalid reads.
-- Function and conditional/loop blocks create lexical scopes. Assignment can update a binding in an enclosing scope; declaration creates a new binding in its scope.
-- Deep immutability prevents nested mutation through aliases; enforcement mechanics remain open.
+`let` declares a mutable binding; `change ... to ...` reassigns. `fixed` prevents rebinding but does not necessarily freeze the referenced value; `frozen` enforces deep immutability. Initializers are required in the current design; uninitialized bindings are not supported. Local binding types may be inferred statically from their initializers. Block scopes are lexical. **Shadowing is prohibited** when an enclosing declaration of the same name is visible; unrelated scopes may reuse names.
 
-## 5. Optional types [Decided]
+Lists, maps and structured values use **value semantics**: assignment creates an independent *logical* value. The runtime may optimize with copy-on-write or structural sharing without observable aliasing. Explicit references/shared mutable state are deferred to the concurrency design.
 
-`name: Type` and `name of type Type` are equivalent. Types are optional; gradual static checking is planned. Both `giving Type` and `-> Type` annotate return types.
+## 5. Expressions [Decided unless noted]
 
-```text
-to multiply with a: int, b of type int giving int:
-    give a * b
+Arithmetic: `+`, `-`, `*`, `/` (real division), `//` (floor division), `%` (floor-compatible remainder). For example, `-5 // 2` is `-3` and `-7 % 3` is `2`. Division by zero raises an exception. Exact rules for mixed numeric operands require conformance tests.
 
-to square with x: int -> int:
-    give x * x
-```
+Comparisons: `is`, `is not`, `is greater than`, `is less than`, `is at least`, `is at most`. Structural equality is defined for compatible lists, maps, and custom types where member equality is supported. Chained comparisons are **not supported in v0.1**.
 
-Checker strictness, inference, unions, generics, runtime enforcement and compatibility rules are open. Static diagnostics are intended to be nonblocking by default.
+Boolean operations: `not`, `and`, `or`, with short-circuit evaluation. `not age is at least 18` means `not (age is at least 18)`.
 
-## 6. Expressions and operators
+**Precedence, highest to lowest:** grouping/call/access; unary numeric minus; multiplication/division/modulo; addition/subtraction; ordering; equality; `not` over a comparison; `and`; `or`. Parentheses override precedence. Same-precedence arithmetic operators associate left-to-right. Operands and call arguments evaluate left-to-right, except short-circuiting operands that are skipped. The formal Pratt binding-power table will refine interactions between `not` and other expressions before parser implementation.
 
-| Category | Forms |
-|---|---|
-| Equality / inequality | `is`, `==`, `is not`, `!=` |
-| Ordering | `<`, `<=`, `>`, `>=` |
-| Logic | `and`, `&&`, `or`, `||`, `not`, `!` |
-| Arithmetic | `+`, `-`, `*`, `/`, `//`, `%`, `**` |
-| Membership | `in`, `not in` |
-| Grouping | `(expression)` |
+## 6. Conditions and loops [Decided]
 
-`is` means **value equality**, not object identity. Logical operators short-circuit. `/` is floating-point division; `//` floors (`-5 // 2` is `-3`). Exact precedence and operator behavior for custom types need specification.
-
-## 7. Branching [Decided]
-
-```text
-if temperature > 180:
-    say "Hot"
-else if temperature > 100:
-    say "Warm"
+```elq
+if age is at least 18:
+    say "Adult"
+otherwise if age is at least 13:
+    say "Teen"
 otherwise:
-    say "Cool"
-```
+    say "Child"
 
-## 8. Loops [Decided]
+for each name in names:
+    say name
 
-```text
-each fruit in fruits:
-    say fruit
-
-repeat 5 times:
+repeat 3 times:
     say "Again"
 
-repeat once:
-    say "Once"
+repeat while ready is false:
+    skip
 
-repeat twice:
-    say "Twice"
-
-repeat thrice:
-    say "Thrice"
-
-while temperature < 180:
-    temperature += 10
-
-until ready:
-    say "Waiting"
+repeat until ready:
+    stop
 ```
 
-`while` runs while true; `until` runs while false. `skip` continues and `stop` breaks the innermost loop. Repeat-count evaluation, mutation during iteration, iterator protocol, and zero/negative counts need precise rules.
+`repeat while` and `repeat until` test their condition before each iteration. `stop` exits the innermost loop; `skip` continues to its next iteration. Collection mutation during iteration and repeat-count edge cases remain provisional.
 
-## 9. Functions, calls and closures [Decided unless noted]
+## 7. Functions [Decided]
 
-```text
-to greet with name as "Guest":
-    say f"Hello, {name}!"
+```elq
+to calculate_total with (price as Float, quantity as Int) giving Float:
+    give price * quantity
 
-to add with a: int, b: int giving int:
-    give a + b
+to greet with (name as String, excited as Bool be false):
+    say "Hello, {name}!"
 
-call greet
-call greet with "Alex"
-call greet with name as "Alex"
-let result be call add with 2, 3
-let fn be add
-
-let double be with x give x * 2
+let total be calculate_total with (20.0, 3)
+greet with (name be "Alex")
+greet with ("Alex", excited be true)
 ```
 
-- `to` declares; `call` invokes; `give` returns. Bare `give` returns without a value; a function falling through returns `nothing` [Provisional].
-- `with` introduces parameters or arguments; omitted for zero-argument functions.
-- Default parameters use `as`; named arguments use `name as value`.
-- Positional arguments precede named arguments.
-- Functions are first-class; referencing `add` does **not** call it.
-- Lexical closures capture outer bindings. `outer count` marks intention to mutate a captured variable; reads need no `outer`.
-- Variadic positional parameter `...items` collects a list; `...numbers: int` constrains each element.
-- Variadic named parameter `named ...options` collects a dictionary.
-- Unpacking: `call sum with ...values` and `call configure with named ...options`.
-- Parameter order: required, defaulted, positional variadic, named variadic.
-- Recursion supported.
+`to` defines a function, `give` returns a value. Parameters **require explicit type annotations**. Functions returning a value require `giving Type`; omitting it defines a function with no value return, where `give value` is invalid. Calls **always** use `with (...)`, including zero arguments (`greet with ()` where applicable). Named arguments use `be`, as do parameter defaults. Evaluation order is left-to-right. Function names conventionally start with verbs, but this is a style guideline.
 
-### Grouped nested calls [Decided]
+First-class functions, closures, variadics and generics require further specification; older `call`, `outer`, and anonymous `with x give ...` forms are **not** grandfathered into the new grammar.
 
-```text
-call display with (call calculate with 10, 20), 30
-let result be (10 + 5) * 2
+## 8. Collections and text [Decided unless noted]
+
+```elq
+let names be ["Alice", "Bob", "Charlie"]
+say item at 0 in names
+say item at -1 in names
+say find item at 99 in names
+say slice of names from 0 to 2
+say size of names
+add "Dana" to names
+remove "Bob" from names
+remove all "Alice" from names
+
+let data be {"name": "Alex"}
+say value for "name" in data
+say find value for "missing" in data
+add key "age" with value 20 to data
+change value for "age" in data to 21
+remove key "age" from data
 ```
 
-Parentheses disambiguate nested calls and expression grouping. The exact parser boundary for unparenthesized calls, anonymous-function precedence, and builtin call forms remains **Open**.
+Indexing is zero-based; negative indices count backward from the end (`-1` is last). Slices include the start and exclude the end. Direct out-of-range indexing raises `IndexOutOfRange`; missing map keys raise `KeyNotFound`. `find` variants return an optional result (`none` when absent). List removal removes the first matching element; `remove all` removes all matches. Map equality is independent of entry order. String concatenation uses `+`; `size of` and slicing apply to strings as well. Unicode character versus grapheme indexing details remain provisional.
 
-## 10. Collections, indexing and mutation
+## 9. Custom types and interfaces [Decided design; implementation deferred]
 
-```text
-let first be items[0]
-let also_first be items at 0
-let middle be items[1:3]
-let other_middle be slice items from 1 to 3
-say size of items
-
-add "orange" to fruits
-remove "banana" from fruits
-remove every "apple" from fruits
-```
-
-- Zero-based indexing; slices end-exclusive. `[start:stop:step]` retained provisionally.
-- `size of` returns length.
-- `add value to collection` adds an element; initially specified for lists as append.
-- `remove value from collection` removes the first matching occurrence.
-- `remove every value from collection` removes all matching occurrences.
-- Previous behavior that removal with no match errors is retained **provisionally**, pending collection-specific error rules.
-- Other collection types' `add`/`remove` semantics remain open.
-- `slice items from 1 to 3` and other conversational indexing forms are retained from the original draft.
-
-## 11. Classes and inheritance [Decided syntax]
-
-```text
+```elq
 define Person:
-    to setup with name:
-        my.name = name
+    name as String
+    age as Int
 
-    to greet:
-        say f"Hello, I'm {my.name}!"
+    to greet with ():
+        say "Hello, I'm {self.name}!"
 
-define Student from Person:
-    to setup with name, school:
-        call parent.setup with name
-        my.school = school
+let alice be Person with (name be "Alice", age be 25)
+alice.greet with ()
+change alice.age to 26
 
-let student be create Student with "Alex", "IIT"
-call student.greet
-say student.name
+define interface Speaker:
+    to speak with () giving String
 ```
 
-`define` declares a class; `define Child from Parent:` expresses inheritance. `create` constructs an instance and calls `setup`. `my` denotes the current instance; `parent` accesses inherited behavior. Dot member access is supported. Previously accepted `name of object` access is retained **provisionally** pending a grammar audit. Public-by-default members and overriding are provisional; MRO, class attributes, initialization and multiple inheritance are open.
+`self` is implicit inside methods. Interfaces are satisfied **structurally and implicitly** by compatible method signatures. Traditional class inheritance, `setup`, `create`, `my`, and `parent` from the older draft are superseded. Field initialization, visibility diagnostics, and mutation rules for frozen instances require additional tests.
 
-## 12. Errors [Decided syntax]
+## 10. Pattern matching [Decided design; implementation deferred]
 
-```text
+```elq
+match status:
+    when 200:
+        say "OK"
+    when 404:
+        say "Missing"
+    otherwise:
+        say "Other"
+```
+
+Only the first matching branch executes; there is no fallthrough. `when value named name:` binds the matched value. Statement matches may omit `otherwise`; value-producing matches must be exhaustive. The expression form and exhaustiveness algorithm remain to be specified.
+
+## 11. Exceptions [Decided]
+
+```elq
 try:
-    raise "Something went wrong"
-catch error:
-    say error
-always:
+    raise DivisionError with ("Cannot divide by zero")
+catch DivisionError named exc:
+    say "Invalid calculation"
+catch error named exc:
+    say "Unexpected error"
+finally:
     say "Cleanup"
 ```
 
-`raise` raises an error; `try` / `catch` / `always` handle errors and cleanup. `always` runs on normal and exceptional exits, including `give`, `skip`, and `stop` (subject to runtime termination rules). Typed catches, hierarchy, matching, rethrow and propagation remain open.
+At least one `catch` or `finally` is required. Uncaught exceptions propagate after `finally`; `finally` also runs on normal exits and `give`. Exceptions are **unchecked**: functions need not declare their possible exceptions. Static tooling may warn about potentially unhandled failures. Detailed exception hierarchy and precedence when `finally` itself fails remain provisional.
 
-## 13. Modules [Decided syntax]
+## 12. Modules and entry point [Decided]
 
-```text
-bring maths
-bring square, cube from maths
-bring mathematics as maths
-bring square as sq from mathematics
-bring recipes.cakes
+```elq
+import math_utils
+import square from math_utils
+import square, cube from math_utils
+import math_utils named math
+import square named squared from math_utils
 ```
 
-Each `.elq` source file is intended as a module. Import aliases use `as`; inheritance and imports both use `from` in unambiguous contexts. Relative/circular imports and module initialization remain provisional pending precise resolution rules.
+A `.elq` file can execute top-level statements in source order; no automatic `main` invocation is required. An imported module initializes once per program execution, with dependency initialization in defined order. Circular imports are rejected in the initial implementation. Top-level declarations are public by default, except names beginning `_`, which are **compiler-enforced module-private**. Precise module lookup paths and packaging are deferred.
 
-## 14. Input/output and standard library
+## 13. Execution, safety and diagnostics [Decided direction]
 
-```text
-say "Hello"
-let name be ask "Your name: "
-let answer be ask
-```
+Normal execution is sequential by default. Assignment evaluates its right-hand side before changing the target. Runtime failures are typed and include source locations. Human-readable diagnostics are the default; structured machine-readable diagnostics (e.g. JSON) are a design requirement for agent tooling. The runtime should support configurable instruction/time/memory limits for sandboxed execution; normal CLI execution has no arbitrary universal instruction cap. Native safe concurrency is a language goal, but syntax, ownership and shared-state rules are **deferred**.
 
-`say` outputs; `ask` reads input with optional prompt. Exact newline, formatting and EOF behavior are open. Math, files, dates and JSON modules are planned.
+## 14. Tooling and backend [Provisional roadmap]
 
-## 15. Tooling [Provisional]
+Planned commands include `eloque run`, `eloque check`, `eloque fmt` and eventually a REPL. The initial Go implementation uses a lexer, parser, AST, mandatory static type checker, bytecode compiler and stack-based VM. The first runnable subset will be narrower than this specification. Bytecode format is internal and unstable. Alternative VM designs, JIT, AOT, Wasm, and CPython performance comparisons are tracked separately; no performance parity is promised.
 
-```text
-eloque run hello.elq
-eloque check hello.elq
-eloque fmt hello.elq
-eloque build hello.elq
-eloque
-```
+## 15. Remaining specification work
 
-`run`, `check`, `fmt` and REPL are planned. `build` is a **future-facing placeholder**, not a promise that native compilation is present in the initial VM release. CLI behavior and packaging are open.
-
-## 16. Implementation independence and compatibility
-
-The initial backend is a Go-based stack bytecode VM, but syntax/semantics should not depend on that implementation. A register VM review is required after the first working VM and benchmark harness (target around v0.2.0). JIT, AOT, Wasm and concurrency research remain tracked separately in `TECHNICAL_BACKLOG.md`. CPython-level performance or better is an **aspiration, not a claim**. Internal bytecode is not a stable public contract.
-
-## 17. Open grammar and semantics work
-
-1. Formal EBNF/Pratt grammar, precedence, nested calls and constructors.
-2. Block-scoped declarations, assignment resolution and `outer` edge cases.
-3. Collection literals, identity, equality, hashing, numeric model and deep immutability.
-4. Typed/default/variadic argument binding and evaluation order.
-5. Iterators, slice variants and collection mutation/error rules.
-6. Class initialization, inherited member lookup, `of` member syntax and method resolution.
-7. Exception taxonomy, typed matching and cleanup control-flow precedence.
-8. Module initialization, relative imports, circular imports and packaging.
-9. String interpolation/escaping, Unicode and diagnostics.
-10. CLI, stdlib, formatter and version stability.
+Before or during implementation, formalize: token/escape tables; Pratt precedence details; complete AST grammar; numeric conversion and Float edge cases; diagnostics schema; collection iteration and Unicode indexing; type compatibility, narrowing and generics; exception hierarchy; module resolution; interfaces; concurrency and ownership. These are **implementation-time refinements**, not reasons to postpone a first lexer.

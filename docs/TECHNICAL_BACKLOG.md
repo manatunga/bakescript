@@ -1,145 +1,215 @@
 # Eloque Technical Backlog
 
-**Status:** Living engineering decision register. This file records deferred work so that "later" always has a review point. A **review commitment** is not a commitment to implement a particular technology.
+**Status:** Living engineering decision register; pre-implementation. A review commitment is not a commitment to implement a specific technology.
 
-## How to use this file
+See [LANGUAGE_SPEC.md](LANGUAGE_SPEC.md) for intended language behavior, [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md) for settled decisions, and [ROADMAP.md](ROADMAP.md) for implementation milestones.
 
-- **Committed:** intended product capability, subject to specification and feasibility.
-- **Review required:** a concrete architectural decision that must be revisited at a milestone.
-- **Exploratory:** a possible approach, not yet approved for implementation.
-- **Resolved:** reviewed with a recorded decision, evidence, and follow-up.
+## How to use this register
 
-At each milestone review, inspect all items whose trigger has been reached. Record the decision, benchmark/prototype evidence where applicable, and the next action. If deferred again, assign a **new explicit trigger** rather than leaving it open-ended.
+- **Committed:** intended capability, with details or delivery timing still subject to engineering validation.
+- **Review required:** specific engineering decision with an explicit review trigger.
+- **Exploratory:** possible technology or optimization, not approved for implementation.
+- **Resolved:** reviewed, with decision and evidence recorded.
 
-## Tracked items
+At each milestone, inspect items whose triggers have arrived. Record the decision, evidence and next action. If deferred, assign a new explicit trigger. Language rules already settled in the specification must not be silently reopened as runtime implementation choices.
+
+## VM and performance
 
 ### TB-001 — Stack-based versus register-based VM
+- **Status:** Review required.
+- **Baseline:** Go stack-based bytecode VM, with local slots and call frames.
+- **Trigger:** After first working VM and repeatable benchmark harness (approximately M2).
+- **Method:** Profile dispatch, stack traffic, bytecode size and representative programs. Compare simpler stack optimizations before prototyping a register VM.
+- **Criterion:** Measurable end-to-end gains that justify additional compiler/runtime complexity.
+- **Evidence:** Pending.
 
-- **Status:** Review required
-- **Current baseline:** Stack-based bytecode VM with local variable slots.
-- **Reason for deferral:** Simpler initial compiler, instruction semantics, and debugging.
-- **Review trigger:** First working VM and repeatable benchmark harness (target: post-v0.2.0 architecture review).
-- **Review method:** Profile dispatch, operand-stack traffic, local access, bytecode size, and representative workloads. Evaluate specialized stack instructions and, if justified, prototype a small register-based execution path.
-- **Decision criteria:** Measurable end-to-end improvement weighed against implementation complexity, maintainability, and correctness. No automatic migration.
-- **Decision/evidence:** Pending.
-
-### TB-002 — Goroutine-backed concurrency and multicore execution
-
-- **Status:** Review required; capability under consideration
-- **Current baseline:** Sequential execution; avoid unnecessary global mutable VM state.
-- **Reason for deferral:** Shared-object safety, cancellation, exception propagation, and task lifetime semantics need design.
-- **Review trigger:** Functions, call frames, closures, and runtime value ownership model are stable (target: after v0.5.0 feature milestone).
-- **Review method:** Prototype isolated VM execution contexts on goroutines; test CPU-bound parallelism, I/O concurrency, race safety, cancellation, and shared immutable values.
-- **Decision criteria:** Safe, predictable semantics and worthwhile performance/ergonomics; define user-facing syntax separately.
-- **Guardrail:** Do not introduce a mandatory global VM execution lock without documenting the tradeoff and alternatives.
-- **Decision/evidence:** Pending.
+### TB-002 — Safe native concurrency
+- **Status:** Committed long-term goal; design review required.
+- **Baseline:** Sequential VM; avoid unnecessary global mutable state.
+- **Trigger:** Once functions, value ownership and mutation semantics are stable, before concurrency implementation (M9 or later).
+- **Method:** Design task lifetime, cancellation, isolation, error propagation, and explicit shared-state rules. Prototype goroutine-backed execution contexts and test race safety.
+- **Criterion:** Safe, understandable semantics with useful concurrency; Go goroutines are an implementation mechanism, not the language contract.
+- **Evidence:** Pending.
 
 ### TB-003 — Adaptive bytecode specialization
-
-- **Status:** Exploratory
-- **Current baseline:** Generic bytecode operations.
-- **Reason for deferral:** Optimization without profiling risks complexity without benefit.
-- **Review trigger:** Representative benchmarks and profiling of a correct baseline VM, after v0.6.0 or when hot operations are measurable.
-- **Review method:** Prototype specialization for high-frequency numeric, call, or attribute operations; track deoptimization/correctness behavior.
-- **Decision criteria:** Repeatable improvements across relevant workloads without unacceptable code complexity.
-- **Decision/evidence:** Pending.
+- **Status:** Exploratory.
+- **Baseline:** Correct generic bytecode operations.
+- **Trigger:** After meaningful workloads and profiling expose hot operations.
+- **Method:** Prototype numeric/call/property specialization; measure allocation, dispatch and regression behavior.
+- **Criterion:** Repeatable benefits without unacceptable complexity.
+- **Evidence:** Pending.
 
 ### TB-004 — JIT compilation
+- **Status:** Exploratory.
+- **Baseline:** Bytecode interpretation.
+- **Trigger:** Baseline VM optimized and remaining bottlenecks documented; formal review after initial stabilization.
+- **Method:** Assess compilation overhead, portability, warmup, runtime integration and maintenance.
+- **Criterion:** Clear benefit beyond improving the interpreter.
+- **Evidence:** Pending.
 
-- **Status:** Exploratory
-- **Current baseline:** Bytecode interpretation.
-- **Reason for deferral:** Significant implementation and maintenance cost.
-- **Review trigger:** Baseline VM optimized and remaining hotspots documented; review no later than the post-v1.0 performance-planning milestone.
-- **Review method:** Evaluate available JIT strategies, compilation overhead, portability, warmup, and representative workloads.
-- **Decision criteria:** Benefits justify complexity relative to improving the interpreter.
-- **Decision/evidence:** Pending.
+### TB-005 — AOT/native backend
+- **Status:** Exploratory.
+- **Baseline:** Go-hosted bytecode VM.
+- **Trigger:** Stable semantics and a concrete deployment/performance use case, no later than 1.0 architecture planning.
+- **Method:** Compare native backend, transpilation and bytecode packaging.
+- **Criterion:** Practical advantage and manageable compatibility burden.
+- **Evidence:** Pending.
 
-### TB-005 — AOT / native backend
-
-- **Status:** Exploratory
-- **Current baseline:** Go-hosted bytecode VM.
-- **Reason for deferral:** Stable semantics and real use cases should precede a second backend.
-- **Review trigger:** Core semantics stabilize near v1.0 and native compilation requirements emerge; formal review at v1.0 architecture planning.
-- **Review method:** Compare native compilation, Go transpilation, and existing bytecode packaging against startup, deployment, and performance needs.
-- **Decision criteria:** Clear practical benefit and manageable compatibility burden.
-- **Decision/evidence:** Pending.
-
-### TB-006 — WebAssembly target
-
-- **Status:** Exploratory
-- **Current baseline:** Native Go runtime.
-- **Reason for deferral:** Browser/portable runtime use cases are not yet established.
-- **Review trigger:** Concrete browser, sandbox, or portable deployment requirement; otherwise review at v1.0 ecosystem planning.
-- **Review method:** Evaluate compiling the Go runtime to Wasm versus a dedicated backend, including I/O and runtime limitations.
-- **Decision criteria:** Demonstrable use case and sustainable implementation.
-- **Decision/evidence:** Pending.
+### TB-006 — WebAssembly
+- **Status:** Exploratory.
+- **Baseline:** Native Go runtime.
+- **Trigger:** Concrete browser, portable sandbox or embedded execution requirement; otherwise 1.0 ecosystem planning.
+- **Method:** Compare compiling Go runtime to Wasm against a dedicated backend.
+- **Criterion:** Clear use case with sustainable support costs.
+- **Evidence:** Pending.
 
 ### TB-007 — CPython comparative performance
+- **Status:** Committed measurement program; parity is an aspiration, not a guarantee.
+- **Baseline:** No measurements.
+- **Trigger:** First usable VM (M2), then major runtime milestones.
+- **Method:** Pin versions, hardware, warmup and inputs. Compare equivalent, correctness-tested arithmetic, loops, calls, strings, collections and object workloads as implemented.
+- **Criterion:** Reproducible findings that guide optimization, not marketing claims based on isolated microbenchmarks.
+- **Evidence:** Pending.
 
-- **Status:** Committed measurement program; performance parity is an ambition, not a guarantee.
-- **Current baseline:** No Eloque measurements yet.
-- **Reason for staging:** Correctness and comparable workloads must precede performance claims.
-- **First trigger:** First usable VM (target: v0.2.0), then repeat at each major runtime milestone.
-- **Review method:** Pin Go/Eloque and CPython versions, hardware, inputs, warmup and iteration policy; compare equivalent implementations of loops, arithmetic, functions, strings, collections, and objects; report wall time, variance, and memory.
-- **Decision criteria:** Use findings to prioritize optimization; do not infer overall parity from a single microbenchmark.
-- **Decision/evidence:** Pending.
-
-### TB-008 — Runtime value representation and memory management
-
-- **Status:** Review required
-- **Current baseline:** Not selected; Go GC is available for Go-managed objects.
-- **Reason for deferral:** Premature boxing/object-layout decisions can constrain the VM.
-- **Review trigger:** Before implementing the core VM value type (v0.2.0 design gate).
-- **Review method:** Compare tagged values, interfaces, pointers, allocation cost, object identity, and `freeze` semantics; benchmark prototypes if practical.
-- **Decision criteria:** Correct semantics, manageable implementation, acceptable allocation and dispatch costs.
-- **Decision/evidence:** Pending.
+### TB-008 — Runtime value representation
+- **Status:** Review required.
+- **Baseline:** Undecided; Go GC can manage Go-allocated objects.
+- **Trigger:** Before implementing the first VM value type (M2).
+- **Method:** Compare Go interfaces, tagged representations and pointer-based values against checked `Int`, binary64 `Float`, `Bool`, `String`, optional values and future collections.
+- **Criterion:** Correct semantics, maintainability, acceptable allocation/dispatch costs.
+- **Evidence:** Pending.
 
 ### TB-009 — Intermediate representation and backend separation
+- **Status:** Review required.
+- **Baseline:** AST directly to bytecode; frontend semantics independent of VM.
+- **Trigger:** Second backend approved or optimization passes become unwieldy.
+- **Method:** Identify real requirements and prototype the smallest useful IR.
+- **Criterion:** Lower overall complexity, not speculative extensibility.
+- **Evidence:** Pending.
 
-- **Status:** Review required
-- **Current baseline:** AST to bytecode compiler; keep language semantics distinct from VM details.
-- **Reason for deferral:** A general-purpose IR is premature with one backend.
-- **Review trigger:** When a second backend is approved or major optimization passes become difficult to express.
-- **Review method:** Identify actual cross-backend/optimization requirements; prototype the smallest useful IR.
-- **Decision criteria:** Reduced complexity overall, not speculative extensibility.
-- **Decision/evidence:** Pending.
+## Frontend and language semantics
+
+### TB-010 — Conversational grammar and call parsing
+- **Status:** Review required.
+- **Baseline:** `name with (...)` for calls, including zero arguments; multiword operators recognized by the parser.
+- **Trigger:** Before expression parsing in M1.
+- **Method:** Write grammar and conformance fixtures for nested calls, named/default arguments, precedence, grouping, indexing and method calls.
+- **Criterion:** Deterministic, unambiguous parsing and precise diagnostics.
+- **Note:** The old `call ... with ...` and bare built-in invocation debate is superseded; do not treat it as active syntax.
+- **Evidence:** Pending.
+
+### TB-011 — Scope, capture and immutability
+- **Status:** Review required.
+- **Baseline:** Block scopes, no shadowing of enclosing visible names, `fixed` binding immutability and `frozen` deep immutability.
+- **Trigger:** Scope resolution in M2; revisit alias/capture behavior before mutable collections and closures.
+- **Method:** Test nested scopes, assignment, recursion, frozen values and aliasing. Define capture mechanics only when closures enter scope.
+- **Criterion:** No accidental mutation through alternate references; diagnostics reflect declared rules.
+- **Evidence:** Pending.
+
+### TB-012 — Static type inference and checking
+- **Status:** Committed; implementation review required.
+- **Baseline:** Strict static types, explicit parameter annotations, local inference and `T?`; type errors block normal execution.
+- **Trigger:** Before first executable subset in M2.
+- **Method:** Specify expression typing, assignment compatibility, return-path validation, optional narrowing and invalidation, and error recovery. Add positive/negative checker fixtures for every implemented feature.
+- **Criterion:** Predictable soundness boundaries and actionable diagnostics; never silently downgrade type errors to warnings.
+- **Evidence:** Pending.
+
+### TB-013 — Numeric semantics and conversions
+- **Status:** Review required.
+- **Baseline:** Checked signed 64-bit `Int`; IEEE 754 binary64 `Float`; floor division/remainder; exact-only implicit Int-to-Float promotion.
+- **Trigger:** Before arithmetic checker and VM implementation (M2).
+- **Method:** Test overflow, division by zero, negative operands, mixed types, representability, NaN/infinity policy and shortest round-trip formatting.
+- **Criterion:** Compiler/runtime agreement and reproducible edge-case behavior.
+- **Evidence:** Pending.
+
+### TB-014 — Collection value semantics and mutation
+- **Status:** Review required.
+- **Baseline:** Lists, maps and structured values are logically independent when assigned; negative sequence indexing and optional safe lookup are designed.
+- **Trigger:** Before mutable collections in M5.
+- **Method:** Compare eager copying, copy-on-write and structural sharing; test nested mutation, `fixed` versus `frozen`, slicing and map-key behavior.
+- **Criterion:** Preserve observable value independence without excessive implementation complexity.
+- **Evidence:** Pending.
+
+### TB-015 — Unicode and string indexing
+- **Status:** Review required.
+- **Baseline:** Immutable UTF-8-backed Unicode strings with character-oriented access, not raw byte indexing.
+- **Trigger:** Before string indexing/slicing in M5.
+- **Method:** Decide Unicode code points versus grapheme clusters; test combining marks, emoji sequences and malformed source input.
+- **Criterion:** Well-documented predictable behavior with viable implementation cost.
+- **Evidence:** Pending.
+
+### TB-016 — Exceptions and cleanup
+- **Status:** Review required.
+- **Baseline:** Typed unchecked exceptions, `try`/`catch`/`finally`, and source-aware failures.
+- **Trigger:** Before exception implementation (M7).
+- **Method:** Define hierarchy, matching, propagation, return/loop exits through `finally`, and precedence when cleanup also fails.
+- **Criterion:** Deterministic unwinding and clear diagnostics.
+- **Evidence:** Pending.
+
+### TB-017 — Modules and visibility
+- **Status:** Review required.
+- **Baseline:** `import`, aliases with `named`, public-by-default top-level symbols, underscore-private names, once-only initialization and rejected circular imports.
+- **Trigger:** Before module implementation (M7).
+- **Method:** Define path resolution, dependency order, initialization failure behavior and caching.
+- **Criterion:** Deterministic behavior and compile-time privacy enforcement.
+- **Evidence:** Pending.
+
+### TB-018 — Structured types, interfaces and matching
+- **Status:** Review required.
+- **Baseline:** `define` structured values, implicit `self`, structural interfaces and `match`/`when` without fallthrough; no class inheritance.
+- **Trigger:** Before M6.
+- **Method:** Specify construction, methods, structural conformance, recursive values, exhaustiveness and value semantics.
+- **Criterion:** Coherent static checks and understandable errors.
+- **Evidence:** Pending.
+
+## Tooling, agents and execution safety
+
+### TB-019 — Structured diagnostics
+- **Status:** Committed; schema review required.
+- **Baseline:** Human-readable diagnostics plus machine-readable output for agents and editor tools.
+- **Trigger:** Begin source spans in M1; finalize initial schema before M8 tooling.
+- **Method:** Define stable error codes, severity, file/line/column/spans, related locations and optional suggested fixes.
+- **Criterion:** Diagnostics are actionable, deterministic and easy to parse without requiring prose interpretation.
+- **Evidence:** Pending.
+
+### TB-020 — Sandboxed execution budgets
+- **Status:** Committed long-term capability; design review required.
+- **Baseline:** Normal CLI has no arbitrary global instruction limit. Sandboxed runs should support configurable instruction, time and memory budgets.
+- **Trigger:** Before agent-oriented execution or untrusted-code hosting (M9 or earlier if required).
+- **Method:** Define metering points, cancellation, resource isolation, host guarantees and failure categories.
+- **Criterion:** Explicit, testable limits with no misleading security guarantees.
+- **Evidence:** Pending.
+
+### TB-021 — References and ownership
+- **Status:** Review required.
+- **Baseline:** Value semantics by default; explicit shared mutable references are deferred.
+- **Trigger:** Before public concurrency/shared-state syntax.
+- **Method:** Evaluate ownership, borrowing or other explicit-sharing models against ease of learning and safety.
+- **Criterion:** Preserve predictable mutation while enabling useful concurrent programs.
+- **Evidence:** Pending.
 
 ## Milestone review checklist
 
-- [ ] **Before v0.2.0 VM implementation:** TB-008 value representation.
-- [ ] **After first working VM / v0.2.0:** TB-001 stack vs register review; TB-007 first CPython benchmark baseline.
-- [ ] **After v0.5.0 function milestone:** TB-002 goroutine concurrency design review.
-- [ ] **After v0.6.0 collections milestone:** TB-003 specialization feasibility; update TB-007 benchmarks.
-- [ ] **At v1.0 planning:** TB-005 native/AOT and TB-006 Wasm reviews; TB-007 performance status.
-- [ ] **After baseline VM optimization / post-v1.0 planning:** TB-004 JIT review.
-- [ ] **When a second backend is approved:** TB-009 IR review.
+- [ ] **M1:** TB-010 grammar; begin TB-019 source spans.
+- [ ] **Before M2:** TB-008 values, TB-012 checker, TB-013 numeric behavior, TB-011 scope.
+- [ ] **After working M2:** TB-001 stack/register review; TB-007 benchmark baseline.
+- [ ] **Before M5:** TB-014 collections/immutability; TB-015 Unicode.
+- [ ] **Before M6:** TB-018 custom types/interfaces/matching.
+- [ ] **Before M7:** TB-016 exceptions; TB-017 modules.
+- [ ] **M8:** TB-019 diagnostics/tooling schema.
+- [ ] **Before M9 or sandbox deployment:** TB-002 concurrency, TB-020 budgets, TB-021 ownership.
+- [ ] **When measured evidence or concrete use cases arise:** TB-003/004/005/006/009.
 
 ## Review record template
 
 ```text
 Date / milestone:
 Item ID:
-Evidence (benchmarks, tests, prototypes, links):
 Decision: implement / retain baseline / defer / reject
+Evidence (tests, benchmarks, prototypes, links):
 Reasoning:
 Owner and next action:
 Next review trigger (if deferred):
 ```
 
-Do not close an item solely because its target release number has passed; either review it or explicitly reschedule it with rationale.
-
-## TB-009 — Conversational-call grammar and built-in invocation
-
-- **Status:** Review required.
-- **Current baseline:** `call` is mandatory for user-defined invocation; older draft examples used `set()` and `int()` directly.
-- **Review trigger:** Before freezing the parser grammar / implementing expression parsing.
-- **Review method:** Test nested calls, built-in conversions, constructors, parentheses, variadics, method calls and operator precedence against a formal grammar and small corpus.
-- **Decision required:** Whether built-ins use `call`, have a narrow syntactic exception, or require a separate design.
-
-## TB-010 — Block scope, closures and deep immutability
-
-- **Status:** Review required.
-- **Current baseline:** Conditional/loop blocks introduce scopes; `outer` permits writes to captured variables; `fix` freezes nested values across aliases.
-- **Review trigger:** Before resolver, closure representation and mutable collection runtime implementation.
-- **Review method:** Write scoping and aliasing test matrices for shadowing, loop capture, early exit, uninitialized reads and mutation through references.
-- **Decision required:** Scope lifetime, captured-cell model and frozen object/value representation.
+Do not mark an item resolved merely because a target release has passed. Review it or explicitly reschedule with a rationale.

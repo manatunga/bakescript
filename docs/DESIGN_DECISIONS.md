@@ -1,60 +1,96 @@
 # Eloque Design Decisions
 
-**Status:** Pre-implementation design log. **Decided** means agreed direction or syntax, not implemented; **Provisional** requires additional specification.
+**Status:** Pre-implementation decision register, updated October 2026.  
+**Source of truth for current language behavior:** [LANGUAGE_SPEC.md](LANGUAGE_SPEC.md).  
+**Interpretation:** *Decided* is an agreed design, **not** an implemented feature. *Provisional* needs further specification; *Deferred* is intentionally outside the first executable subset. The historical record below is retained for traceability.
 
-| ID | Status | Current decision |
+## Current decisions
+
+| ID | Status | Decision |
 |---|---|---|
-| D-001 | Decided | Implement in Go; initially lexer → parser → bytecode compiler → VM |
-| D-002 | Provisional | Working name Eloque, CLI `eloque`, extension `.elq`; check conflicts |
-| D-003 | Decided | Conversational, concise, rigorous, general-purpose; culinary theme retired |
-| D-004 | Decided | Significant indentation, `:`, lowercase keywords, `#` comments |
-| D-005 | Decided | Mutable `let x be value`; optional uninitialized `let x`; assignment `=` |
-| D-006 | Decided | Deep immutable `fix x at value`; nested/alias mutation prohibited |
-| D-007 | Decided | `true`, `false`, `nothing`; conventional collection literals |
-| D-008 | Decided | Optional `: Type` / `of type Type`; gradual checking |
-| D-009 | Decided | Return annotations `giving Type` / `-> Type` |
-| D-010 | Decided | `if` / `else if` / `otherwise`; block scope |
-| D-011 | Decided | `each`, `repeat`, `while`, `until`; `skip` / `stop` |
-| D-012 | Decided | `to` declaration, `call` invocation, `give` return, defaults with `as` |
-| D-013 | Decided | `...items`, `named ...options`, lexical closures, `outer` |
-| D-014 | Decided | Anonymous expression function `with x give x * 2` |
-| D-015 | Decided | Parentheses for grouping and nested calls |
-| D-016 | Decided | `define` class, `from` inheritance, `setup`, `create`, `my`, `parent` |
-| D-017 | Decided | `raise` / `try` / `catch` / `always` |
-| D-018 | Decided | `bring` for imports; aliases with `as` |
-| D-019 | Decided | `say` output; `ask` input |
-| D-020 | Decided | `add`, `remove`, `remove every` collection operations |
-| D-021 | Decided | `is`/`==` value equality; `is not`/`!=`; logical word/symbol aliases |
-| D-022 | Decided | Stack VM first; mandatory register-VM comparison after working VM/benchmarks |
-| D-023 | Provisional | CPython parity or better is a long-term benchmark target, not a guarantee |
-| D-024 | Provisional | Backend extensibility, SemVer-inspired versioning, standard library |
-| D-025 | Provisional | Preserve prior indexing/slicing alternatives and public-by-default members |
-| D-026 | Open | Built-in `set()` / `int()` invocation versus mandatory `call` |
-| D-027 | Open | Precise grammar, evaluation order, typing, errors, modules, class MRO |
+| D-001 | Decided | Implement Eloque in Go, initially using a lexer, parser, AST, mandatory static checker, bytecode compiler, and stack-based VM. |
+| D-002 | Provisional | Eloque, `eloque`, and `.elq` are working names; naming/conflict checks remain. |
+| D-003 | Decided | General-purpose language with concise structured conversational syntax, not unrestricted English. Prioritize novice readability, predictable agent tooling, and a foundation for safe concurrency. |
+| D-004 | Decided | Four-space significant indentation, `:` blocks, no tabs, `#` comments, case-sensitive ASCII identifiers, and double-quoted strings. |
+| D-005 | Decided | `let x be value` declares a mutable binding; `change x to value` reassigns. Initialized local bindings may infer types. |
+| D-006 | Decided | `let fixed x be value` prevents rebinding; `let frozen x be value` provides deep immutability. |
+| D-007 | Decided | `true`, `false`, `none`; `none` belongs in optional `T?` contexts, not arbitrary non-optional values. |
+| D-008 | Decided | Strict static typing, with `as Type` annotations and local inference; checker errors block normal compilation. No implicit truthiness. |
+| D-009 | Decided | Function parameters require explicit types; value-returning functions require `giving Type`. Omission means no value return. |
+| D-010 | Decided | `if`, `otherwise if`, `otherwise`; lexical block scopes; no shadowing of a visible enclosing binding. |
+| D-011 | Decided | `for each`, `repeat N times`, `repeat while`, `repeat until`; `skip` and `stop`. |
+| D-012 | Decided | `to name with (parameters) giving Type:` declares functions; `name with (arguments)` invokes them, including zero-argument calls. `give` returns. |
+| D-013 | Decided | Named arguments and defaults use `be`; function names are conventionally verb-first, not enforced. |
+| D-014 | Deferred | Closures, first-class function details, variadics, and generics need a new grammar; prior `outer`/anonymous-function syntax is not automatically retained. |
+| D-015 | Decided | Parentheses group expressions; evaluation of operands and arguments is left-to-right, except Boolean short-circuiting. |
+| D-016 | Decided | `define` introduces structured custom types with fields and methods; implicit `self`; structural interfaces. No traditional class inheritance. |
+| D-017 | Decided | Typed unchecked exceptions: `raise`, `try`, `catch`, `finally`; at least one catch or finally. |
+| D-018 | Decided | `import` for modules; `named` for aliases. Modules initialize once, circular imports rejected initially, underscore-prefixed top-level names are compiler-private. |
+| D-019 | Decided | `say` output; string interpolation uses `"Hello, {name}"`. Input API remains to be specified. |
+| D-020 | Decided | Lists/maps support conversational access and mutation; `remove all` removes all matching list values; `find` access returns optional values. |
+| D-021 | Decided | Word-based comparison operators (`is`, `is not`, `is greater than`, etc.); structural equality where supported. Chained comparisons excluded from initial grammar. |
+| D-022 | Decided | Stack VM first; revisit register VM only with a functioning benchmarked baseline. |
+| D-023 | Provisional | CPython parity is an aspirational benchmark, not a guarantee. |
+| D-024 | Provisional | Backend extensibility, standard library, packaging, and post-1.0 compatibility policy require further work. |
+| D-025 | Decided | Zero-based indexing, negative indices from the end, end-exclusive slices, and typed failures for invalid direct access. |
+| D-026 | Decided | `Int` is checked signed 64-bit; `Float` is IEEE 754 binary64; display shortest round-trippable decimal; no automatic rounding; implicit numeric promotion only when provably exact. |
+| D-027 | Decided | `/` performs real division; `//` floors; `%` uses floor-compatible remainder. Division by zero fails. |
+| D-028 | Decided | Lists, maps, and custom structured values have logical value semantics. Copy-on-write/structural sharing may implement this without observable aliasing. |
+| D-029 | Deferred | Explicit references, shared mutable state, and concurrency syntax are designed together later. |
+| D-030 | Decided | Pattern matching uses `match`, `when`, `otherwise`; no fallthrough. Statement matches may be non-exhaustive; value-producing matches must be exhaustive. |
+| D-031 | Decided | Top-level statements execute in source order; `main` is not automatically invoked. |
+| D-032 | Decided | Normal execution is sequential; runtime exceptions include source locations; structured diagnostics are required for tooling. |
+| D-033 | Decided | Configurable sandbox limits are supported by design; no arbitrary universal instruction limit for normal CLI runs. |
 
-## Superseded syntax (historical record)
+## Superseded syntax and semantics
 
-| Original BakeScript | Eloque replacement |
+These examples are **historical only**. Do not use them as current lexer/parser fixtures.
+
+| Earlier Eloque draft | Current direction |
 |---|---|
-| `prep x as 1`, `x as 2` | `let x be 1`, `x = 2` |
-| `freeze x as 1` | `fix x at 1` |
-| `fresh`, `spoilt`, `empty` | `true`, `false`, `nothing` |
-| `taste`, `instead`, `otherwise` | `if`, `else if`, `otherwise` |
-| `stir 3 times` | `repeat 3 times` |
-| `pour`, `sip` | `say`, `ask` |
-| `cook greet`, `serve x` | `call greet`, `give x` |
-| `*args`, `**kwargs` | `...args`, `named ...kwargs` |
-| `lambda x: x * 2` | `with x give x * 2` |
-| `menu Person`, `menu Child based on Parent` | `define Person`, `define Child from Parent` |
-| `order Person with ...` | `create Person with ...` |
-| `my.x as value` | `my.x = value` |
-| `burn`, `attempt`, `rescue`, `always` | `raise`, `try`, `catch`, `always` |
-| `grab maths` | `bring maths` |
-| `toss`, `pluck`, `dispose` | `add`, `remove`, `remove every` |
-| `bake` CLI, `.bs` | Provisional `eloque` CLI, `.elq` |
+| `x = 2`, `x += 1` | `change x to 2`; compound assignment syntax not retained |
+| `fix x at 1` | `let fixed x be 1` or `let frozen x be 1` |
+| `nothing` | `none` |
+| `name: int`, `name of type int` | `name as Int` |
+| Optional gradual type checker | Mandatory static type checker with inference |
+| `else if` | `otherwise if` |
+| `each item in items` | `for each item in items` |
+| `while ready`, `until ready` | `repeat while ready`, `repeat until ready` |
+| `call greet with "Alex"` | `greet with ("Alex")` |
+| `call greet` | `greet with ()` |
+| Default/named argument `as` | `be` |
+| `f"Hello, {name}"` | `"Hello, {name}"` |
+| `bring maths`, `bring square as sq from maths` | `import maths`, `import square named sq from maths` |
+| `define Child from Parent`, `setup`, `create`, `my`, `parent` | Structured `define` types, implicit `self`, `Type with (...)`; no inheritance |
+| `always` exception cleanup | `finally` |
+| `items[0]`, `items at 0` | `item at 0 in items` |
+| `remove every x from items` | `remove all x from items` |
+| `==`, `!=`, `<`, `>=` as comparison alternatives | Word-based comparison forms are the documented grammar |
+| Tuple and set literals as core collection types | Deferred pending a separate design |
+| Uninitialized `let x` | Initializers required in current design |
+| `outer`, `with x give ...`, legacy variadics | Deferred; require deliberate redesign |
 
-**Unchanged unless a conflict arises:** `each`, `until`, `skip`, `stop`, `size of`, `at` indexing, bracket indexing/slicing, `slice ... from ... to ...`, `setup`, `my`, `parent`, dotted members, named/default arguments, lexical closures, first-class functions, optional annotations, and the technical backlog.
+### Historical origin
+
+The project began with BakeScript-inspired culinary syntax and then moved to Eloque's conversational style. That earlier transition remains historical context, not a second set of active language rules. The repository's previous version of this file records additional BakeScript-to-Eloque mappings; retain them in Git history rather than mixing them into the active grammar.
+
+## Decisions requiring implementation-time refinement
+
+- Formal lexer token table, escapes, exact precedence/binding powers, and complete parser grammar.
+- `Int`/`Float` mixed arithmetic, conversions, exceptional floating-point values, and overflow behavior for every operator.
+- Type narrowing, generic type compatibility, and safe mutation analysis.
+- Unicode indexing (code points versus grapheme clusters), collection iteration and mutation rules.
+- Exception taxonomy, cleanup precedence, and module resolution.
+- Structural interface diagnostics, pattern exhaustiveness, and concurrency/ownership.
+- CLI command behavior, machine-readable diagnostic schema, and sandbox budget mechanics.
 
 ## Change process
 
-When a decision changes, update the specification, this log, examples, and relevant implementation tests. Do not treat provisional semantics as settled merely because an example uses them.
+When a decision changes:
+
+1. Update `LANGUAGE_SPEC.md` first.
+2. Amend the relevant row here, marking superseded syntax explicitly.
+3. Update README examples, architecture, roadmap, backlog, and conformance tests where affected.
+4. Distinguish a design agreement from a tested implementation.
+
+No entry in this register implies the feature already runs.
