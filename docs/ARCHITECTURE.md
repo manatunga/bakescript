@@ -1,11 +1,11 @@
-# GeeBreeze Architecture
+# Eloque Architecture
 
-**Status:** Proposed architecture; no production implementation is implied. Name and `.gbz` extension are provisional.
+**Status:** Proposed architecture; no production implementation is implied. Name and `.elq` extension are provisional.
 
 ## Initial execution pipeline
 
 ```text
-Source (.gbz)
+Source (.elq)
     |
     v
 Lexer / indentation handling
@@ -29,7 +29,7 @@ Go-based stack VM
 Program execution
 ```
 
-A static checker (`geebreeze check`) may share the frontend but must not be required
+A static checker (`eloque check`) may share the frontend but must not be required
 for normal execution by default.
 
 ## Responsibilities
@@ -43,7 +43,7 @@ for normal execution by default.
 | Compiler | Convert validated AST to VM instructions |
 | VM | Execute instructions, manage frames and stack |
 | Runtime | Values, collections, functions, objects, errors, built-ins |
-| CLI | `geebreeze run`, `geebreeze check`, `geebreeze fmt`, REPL |
+| CLI | `eloque run`, `eloque check`, `eloque fmt`, REPL |
 
 ## VM direction
 
@@ -80,7 +80,7 @@ No particular speedup over CPython is assumed.
 
 ## Backend independence
 
-**The bytecode VM is the initial backend, not GeeBreeze's identity.**
+**The bytecode VM is the initial backend, not Eloque's identity.**
 
 Possible future architecture:
 
@@ -100,7 +100,7 @@ This is conceptual. A shared IR may become useful if multiple backends are
 actually pursued; **do not build an elaborate multi-backend IR for v0.1**.
 
 Keep parsing and language semantics separate from VM-specific machinery so
-future backends can be added without redefining GeeBreeze's behavior.
+future backends can be added without redefining Eloque's behavior.
 
 ## Compatibility boundaries
 

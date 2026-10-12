@@ -1,11 +1,11 @@
-# GeeBreeze Design Decisions
+# Eloque Design Decisions
 
 **Status:** Pre-implementation design log. **Decided** means agreed direction or syntax, not implemented; **Provisional** requires additional specification.
 
 | ID | Status | Current decision |
 |---|---|---|
 | D-001 | Decided | Implement in Go; initially lexer → parser → bytecode compiler → VM |
-| D-002 | Provisional | Working name GeeBreeze, CLI `geebreeze`, extension `.gbz`; check conflicts |
+| D-002 | Provisional | Working name Eloque, CLI `eloque`, extension `.elq`; check conflicts |
 | D-003 | Decided | Conversational, concise, rigorous, general-purpose; culinary theme retired |
 | D-004 | Decided | Significant indentation, `:`, lowercase keywords, `#` comments |
 | D-005 | Decided | Mutable `let x be value`; optional uninitialized `let x`; assignment `=` |
@@ -34,7 +34,7 @@
 
 ## Superseded syntax (historical record)
 
-| Original BakeScript | GeeBreeze replacement |
+| Original BakeScript | Eloque replacement |
 |---|---|
 | `prep x as 1`, `x as 2` | `let x be 1`, `x = 2` |
 | `freeze x as 1` | `fix x at 1` |
@@ -51,7 +51,7 @@
 | `burn`, `attempt`, `rescue`, `always` | `raise`, `try`, `catch`, `always` |
 | `grab maths` | `bring maths` |
 | `toss`, `pluck`, `dispose` | `add`, `remove`, `remove every` |
-| `bake` CLI, `.bs` | Provisional `geebreeze` CLI, `.gb` |
+| `bake` CLI, `.bs` | Provisional `eloque` CLI, `.elq` |
 
 **Unchanged unless a conflict arises:** `each`, `until`, `skip`, `stop`, `size of`, `at` indexing, bracket indexing/slicing, `slice ... from ... to ...`, `setup`, `my`, `parent`, dotted members, named/default arguments, lexical closures, first-class functions, optional annotations, and the technical backlog.
 

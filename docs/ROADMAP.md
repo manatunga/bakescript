@@ -1,10 +1,10 @@
-# GeeBreeze Roadmap
+# Eloque Roadmap
 
-**Status:** Aspirational planning document, not a release commitment. GeeBreeze is a provisional name.
+**Status:** Aspirational planning document, not a release commitment. Eloque is a provisional name.
 
 ## Release philosophy
 
-GeeBreeze uses Semantic Versioning as a guideline:
+Eloque uses Semantic Versioning as a guideline:
 
 - `MAJOR`: incompatible public language/API changes after 1.0.
 - `MINOR`: backward-compatible new capabilities after 1.0.

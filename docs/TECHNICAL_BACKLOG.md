@@ -1,4 +1,4 @@
-# GeeBreeze Technical Backlog
+# Eloque Technical Backlog
 
 **Status:** Living engineering decision register. This file records deferred work so that "later" always has a review point. A **review commitment** is not a commitment to implement a particular technology.
 
@@ -77,10 +77,10 @@ At each milestone review, inspect all items whose trigger has been reached. Reco
 ### TB-007 — CPython comparative performance
 
 - **Status:** Committed measurement program; performance parity is an ambition, not a guarantee.
-- **Current baseline:** No GeeBreeze measurements yet.
+- **Current baseline:** No Eloque measurements yet.
 - **Reason for staging:** Correctness and comparable workloads must precede performance claims.
 - **First trigger:** First usable VM (target: v0.2.0), then repeat at each major runtime milestone.
-- **Review method:** Pin Go/GeeBreeze and CPython versions, hardware, inputs, warmup and iteration policy; compare equivalent implementations of loops, arithmetic, functions, strings, collections, and objects; report wall time, variance, and memory.
+- **Review method:** Pin Go/Eloque and CPython versions, hardware, inputs, warmup and iteration policy; compare equivalent implementations of loops, arithmetic, functions, strings, collections, and objects; report wall time, variance, and memory.
 - **Decision criteria:** Use findings to prioritize optimization; do not infer overall parity from a single microbenchmark.
 - **Decision/evidence:** Pending.
 

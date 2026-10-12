@@ -1,15 +1,15 @@
-# GeeBreeze Language Specification
+# Eloque Language Specification
 
 **Status:** Draft, pre-implementation. Examples are illustrative, not executable yet.  
-**Working name:** GeeBreeze (availability and naming conflicts not fully verified)  
-**Provisional extension:** `.gbz` (formerly `.bs`)  
+**Working name:** Eloque (availability and naming conflicts not fully verified)  
+**Provisional extension:** `.elq` (formerly `.bs`)  
 **Implementation:** Go; initially a bytecode compiler and VM
 
 **Labels:** **Decided** = explicitly agreed syntax or intent; **Provisional** = accepted direction with details to formalize; **Open** = unresolved behavior.
 
 ## 1. Design philosophy [Decided]
 
-GeeBreeze is a general-purpose programming language with conversational, intuitive syntax and rigorous semantics. It is **not** unrestricted natural language. Favor natural, concise instructions without sacrificing precision or introducing forced metaphors. Significant indentation and `:` delimit blocks; keywords are lowercase.
+Eloque is a general-purpose programming language with conversational, intuitive syntax and rigorous semantics. It is **not** unrestricted natural language. Favor natural, concise instructions without sacrificing precision or introducing forced metaphors. Significant indentation and `:` delimit blocks; keywords are lowercase.
 
 ## 2. Lexical structure
 
@@ -226,7 +226,7 @@ bring square as sq from mathematics
 bring recipes.cakes
 ```
 
-Each `.gb` source file is intended as a module. Import aliases use `as`; inheritance and imports both use `from` in unambiguous contexts. Relative/circular imports and module initialization remain provisional pending precise resolution rules.
+Each `.elq` source file is intended as a module. Import aliases use `as`; inheritance and imports both use `from` in unambiguous contexts. Relative/circular imports and module initialization remain provisional pending precise resolution rules.
 
 ## 14. Input/output and standard library
 
@@ -241,11 +241,11 @@ let answer be ask
 ## 15. Tooling [Provisional]
 
 ```text
-geebreeze run hello.gb
-geebreeze check hello.gb
-geebreeze fmt hello.gb
-geebreeze build hello.gb
-geebreeze
+eloque run hello.elq
+eloque check hello.elq
+eloque fmt hello.elq
+eloque build hello.elq
+eloque
 ```
 
 `run`, `check`, `fmt` and REPL are planned. `build` is a **future-facing placeholder**, not a promise that native compilation is present in the initial VM release. CLI behavior and packaging are open.
