@@ -1,6 +1,6 @@
 # Eloque Design Decisions
 
-**Status:** Pre-implementation decision register, updated October 2026.  
+**Status:** Active design decision register, updated October 2026.
 **Source of truth for current language behavior:** [LANGUAGE_SPEC.md](LANGUAGE_SPEC.md).  
 **Interpretation:** *Decided* is an agreed design, **not** an implemented feature. *Provisional* needs further specification; *Deferred* is intentionally outside the first executable subset. The historical record below is retained for traceability.
 
@@ -41,6 +41,7 @@
 | D-031 | Decided | Top-level statements execute in source order; `main` is not automatically invoked. |
 | D-032 | Decided | Normal execution is sequential; runtime exceptions include source locations; structured diagnostics are required for tooling. |
 | D-033 | Decided | Configurable sandbox limits are supported by design; no arbitrary universal instruction limit for normal CLI runs. |
+| D-034 | Decided | Decimal integer literals prohibit leading zeros except for `0`. A digit sequence immediately followed by an ASCII letter or underscore is a lexical error; invalid-suffix diagnostics take precedence over leading-zero diagnostics. The initial lexer reports source-positioned errors and stops at the first lexical error; multi-error recovery is deferred. |
 
 ## Superseded syntax and semantics
 

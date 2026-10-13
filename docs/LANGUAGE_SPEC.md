@@ -1,6 +1,6 @@
 # Eloque Language Specification
 
-**Status:** Pre-implementation design draft, revised October 2026. Examples are illustrative, not executable.  
+**Status:** Active language design specification, revised October 2026. Examples are illustrative, not executable.
 **Working name / CLI / extension:** Eloque / `eloque` / `.elq` (naming checks remain pending).  
 **Implementation direction:** Go frontend, static checker, bytecode compiler, stack-based VM.
 
@@ -18,6 +18,7 @@ Eloque is a general-purpose programming language with structured conversational 
 - Identifiers use ASCII letters, digits, and `_`, cannot start with a digit, and are case-sensitive. Reserved keywords cannot be identifiers. Snake_case is the recommended naming convention.
 - Strings use double quotes and support escapes and `{expression}` interpolation. Precise escaping and Unicode grapheme rules remain to be specified.
 - Multiword operators are parsed from individual keyword tokens, e.g. `is greater than`.
+- Decimal integer literals consist of ASCII digits. Leading zeros are forbidden except for the literal `0` itself. A digit sequence immediately followed by an ASCII letter or underscore is a malformed numeric literal and is rejected during lexical analysis (e.g. `123abc`, `42_name`). When both an invalid identifier suffix and leading zeros occur (e.g. `007abc`), the invalid-suffix diagnostic takes precedence.
 
 ## 3. Types and literals [Decided unless noted]
 
@@ -190,6 +191,8 @@ A `.elq` file can execute top-level statements in source order; no automatic `ma
 ## 13. Execution, safety and diagnostics [Decided direction]
 
 Normal execution is sequential by default. Assignment evaluates its right-hand side before changing the target. Runtime failures are typed and include source locations. Human-readable diagnostics are the default; structured machine-readable diagnostics (e.g. JSON) are a design requirement for agent tooling. The runtime should support configurable instruction/time/memory limits for sandboxed execution; normal CLI execution has no arbitrary universal instruction cap. Native safe concurrency is a language goal, but syntax, ownership and shared-state rules are **deferred**.
+
+**Lexical diagnostics:** The initial lexer uses fail-fast error handling: scanning stops at the first detected lexical error. Diagnostics identify the source line and column and describe the invalid input. Lexical errors are compiler diagnostics, not runtime exceptions. Error recovery and reporting multiple lexical errors in a single pass may be introduced in a later implementation.
 
 ## 14. Tooling and backend [Provisional roadmap]
 
