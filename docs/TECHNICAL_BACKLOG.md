@@ -1,6 +1,6 @@
 # Eloque Technical Backlog
 
-**Status:** Living engineering decision register; pre-implementation. A review commitment is not a commitment to implement a specific technology.
+**Status:** Living engineering decision register; M1 implementation in progress. A review commitment is not a commitment to implement a specific technology.
 
 See [LANGUAGE_SPEC.md](LANGUAGE_SPEC.md) for intended language behavior, [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md) for settled decisions, and [ROADMAP.md](ROADMAP.md) for implementation milestones.
 
@@ -86,6 +86,18 @@ At each milestone, inspect items whose triggers have arrived. Record the decisio
 - **Method:** Identify real requirements and prototype the smallest useful IR.
 - **Criterion:** Lower overall complexity, not speculative extensibility.
 - **Evidence:** Pending.
+
+### TB-022 — Lexer representation and allocation efficiency
+
+- **Status:** Resolved for the current lexer implementation.
+- **Baseline:** String-backed token kinds, an indentation stack with minimal initial capacity, and a pending-token queue that discarded reusable backing storage after draining, causing repeated allocations.
+- **Trigger:** Initial M1 lexer implementation and performance profiling.
+- **Decision:** Use `uint8`-backed token kinds with readable names, reuse pending-token queue storage through an indexed queue, and preallocate modest indentation-stack capacity.
+- **Evidence:** Mixed-source allocations decreased from 248 B/op and 7 allocs/op to 80 B/op and 2 allocs/op. Token structure size decreased from 48 to 40 bytes on amd64. Scaling benchmarks from 138 bytes to 138 KB showed approximately linear execution time, with constant allocation counts for the tested bounded-depth workload.
+- **Complexity:** O(N) overall scanning time; O(d + q) auxiliary working space, excluding source storage and caller-retained tokens.
+- **Criterion:** Maintain correctness, predictable linear scaling, and low allocation overhead without introducing unnecessary implementation complexity.
+- **Next action:** Retain the benchmark suite and reprofile when new lexical features materially change scanner behavior.
+- **Next review trigger:** Completion of M1 lexical coverage or a measured regression in representative workloads.
 
 ## Frontend and language semantics
 
@@ -190,6 +202,7 @@ At each milestone, inspect items whose triggers have arrived. Record the decisio
 
 ## Milestone review checklist
 
+- [x] **M1 lexer performance:** TB-022 token representation, allocation efficiency, and scaling review.
 - [ ] **M1:** TB-010 grammar; begin TB-019 source spans.
 - [ ] **Before M2:** TB-008 values, TB-012 checker, TB-013 numeric behavior, TB-011 scope.
 - [ ] **After working M2:** TB-001 stack/register review; TB-007 benchmark baseline.

@@ -3,6 +3,15 @@ package lexer
 // Lexer maintains the state required to tokenize Eloque source code.
 // start marks the beginning of the current token, while current points
 // to the next unread byte. Line and column positions are 1-based.
+// indentStack records active indentation widths in spaces.
+// The first entry is always 0, representing the top-level scope.
+// atLineStart indicates that the lexer has not yet processed
+// the indentation of the current physical source line.
+// pendingTokens stores tokens generated ahead of time, such as multiple
+// DEDENT tokens, until nextToken returns them in their original order.
+// pendingIndex identifies the next unread token in pendingTokens.
+// Once the queue is drained, both the index and slice length are reset,
+// allowing the existing backing array to be reused.
 type Lexer struct {
 	source        string
 	start         int
@@ -10,6 +19,10 @@ type Lexer struct {
 	line          int
 	column        int
 	startPosition Position
+	indentStack   []int
+	atLineStart   bool
+	pendingTokens []Token
+	pendingIndex  int
 }
 
 // New creates a lexer for the provided source text.
@@ -22,6 +35,8 @@ func New(source string) *Lexer {
 		line:          1,
 		column:        1,
 		startPosition: Position{Line: 1, Column: 1},
+		indentStack:   make([]int, 1, 4),
+		atLineStart:   true,
 	}
 }
 
@@ -138,20 +153,150 @@ func hasLeadingZero(lexeme string) bool {
 	return len(lexeme) > 1 && lexeme[0] == '0'
 }
 
-// nextToken scans and returns the next recognized token.
-// It skips spaces, preserves newlines, and validates integer literals.
-// On invalid input, it returns a zero-value token and a positioned
-// lexical error, stopping tokenization at the first detected error.
+// popPendingToken retrieves the oldest unread queued token.
+// When all pending tokens have been consumed, it resets the queue
+// while retaining its backing array for subsequent reuse.
+func (l *Lexer) popPendingToken() (Token, bool) {
+	if l.pendingIndex >= len(l.pendingTokens) {
+		return Token{}, false
+	}
+
+	token := l.pendingTokens[l.pendingIndex]
+	l.pendingIndex++
+
+	if l.pendingIndex == len(l.pendingTokens) {
+		l.pendingTokens = l.pendingTokens[:0]
+		l.pendingIndex = 0
+	}
+
+	return token, true
+}
+
+// measureIndentation consumes consecutive ASCII spaces at the current
+// cursor position and returns their count. It leaves the first non-space
+// byte unread and does not validate or modify indentation levels.
+// Callers should invoke it only when processing the start of a line.
+func (l *Lexer) measureIndentation() int {
+	width := 0
+	for l.peek() == ' ' {
+		l.advance()
+		width++
+	}
+	return width
+}
+
+// isValidIndentationWidth reports whether a measured indentation width
+// is non-negative and aligned to Eloque's four-space indentation levels.
+// It does not check whether the width matches an active indentation level.
+func isValidIndentationWidth(width int) bool {
+	return width >= 0 && width%4 == 0
+}
+
+// processIndentation validates and applies a line's indentation width.
+// It queues structural tokens without consuming source characters.
+// Invalid indentation returns a positioned lexical error without
+// modifying the indentation stack or pending-token queue.
+func (l *Lexer) processIndentation(width int) error {
+	if !isValidIndentationWidth(width) {
+		return &LexError{
+			Position: Position{Line: l.line, Column: l.column},
+			Message:  "indentation must be a multiple of four spaces",
+		}
+	}
+	currentIndent := l.indentStack[len(l.indentStack)-1]
+	if width > currentIndent {
+		l.indentStack = append(l.indentStack, width)
+		l.pendingTokens = append(l.pendingTokens, Token{
+			Kind:     TokenIndent,
+			Position: Position{Line: l.line, Column: l.column},
+		})
+	}
+	if width < currentIndent {
+		index := len(l.indentStack) - 1
+		for index > 0 && l.indentStack[index] > width {
+			index--
+		}
+		if l.indentStack[index] != width {
+			return &LexError{
+				Position: Position{Line: l.line, Column: l.column},
+				Message:  "dedentation does not match an active indentation level",
+			}
+		}
+		dedentCount := len(l.indentStack) - 1 - index
+		l.indentStack = l.indentStack[:index+1]
+		for range dedentCount {
+			l.pendingTokens = append(l.pendingTokens, Token{
+				Kind:     TokenDedent,
+				Position: Position{Line: l.line, Column: l.column},
+			})
+		}
+	}
+	return nil
+}
+
+// skipComment consumes a comment from the current cursor position up to,
+// but not including, the next newline or end of source. It assumes the
+// cursor is positioned at the '#' character and leaves any newline unread
+// so the lexer can emit it as a separate token.
+func (l *Lexer) skipComment() {
+	for !l.isAtEnd() && l.peek() != '\n' {
+		l.advance()
+	}
+}
+
+// nextToken returns the next token in source order, emitting queued
+// structural tokens before scanning additional source text. At the start
+// of a non-blank line, it measures and processes indentation before
+// scanning ordinary tokens. It skips horizontal spaces, preserves
+// newlines, and validates integer literals. Invalid input returns a
+// zero-value token and a positioned lexical error; callers should stop
+// tokenization when an error occurs.
 func (l *Lexer) nextToken() (Token, error) {
-	l.skipHorizontalWhitespace()
-	l.markTokenStart()
+	if token, ok := l.popPendingToken(); ok {
+		return token, nil
+	}
+
+	if l.atLineStart {
+		width := l.measureIndentation()
+
+		if l.peek() != '\n' && l.peek() != '#' && !l.isAtEnd() {
+			if err := l.processIndentation(width); err != nil {
+				return Token{}, err
+			}
+
+			l.atLineStart = false
+			if token, ok := l.popPendingToken(); ok {
+				return token, nil
+			}
+		}
+	}
+
+	for {
+		l.skipHorizontalWhitespace()
+		l.markTokenStart()
+
+		if l.peek() != '#' {
+			break
+		}
+
+		l.skipComment()
+	}
 
 	if l.isAtEnd() {
+		if len(l.indentStack) > 1 {
+			if err := l.processIndentation(0); err != nil {
+				return Token{}, err
+			}
+			if token, ok := l.popPendingToken(); ok {
+				return token, nil
+			}
+		}
 		return l.makeToken(TokenEOF), nil
 	}
 
 	char := l.advance()
 	if char == '\n' {
+		l.atLineStart = true
 		return l.makeToken(TokenNewline), nil
 	}
 

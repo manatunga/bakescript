@@ -1,6 +1,6 @@
 # Eloque Architecture
 
-**Status:** Proposed architecture, pre-implementation. The working language name, `.elq` extension and CLI command remain provisional. Nothing in this document implies an executable compiler exists.
+**Status:** Early implementation — Milestone 1 (Lexer) in progress. The working language name, `.elq` extension, and CLI command remain provisional. The initial lexer is implemented and tested, but the parser, static checker, bytecode compiler, and VM are not yet operational. This document distinguishes the target architecture from implemented functionality.
 
 ## Goals and boundaries
 
@@ -84,6 +84,64 @@ A single implementation package may initially handle more than one responsibilit
 - Top-level statements execute in source order.
 - Imports initialize modules once per execution; reject circular imports in the initial design.
 - No automatic `main` invocation.
+
+## Current lexer implementation
+
+The lexer is the first implemented stage of Eloque's compilation pipeline. It is written in Go and currently supports a deliberately limited subset of the planned language.
+
+### Implemented functionality
+
+- Byte-oriented source scanning with line and column tracking.
+- ASCII identifiers and the initial `let`, `be`, and `say` keywords.
+- Decimal integer literals, including rejection of leading zeros and invalid identifier suffixes.
+- Newline tokens and significant indentation using `INDENT` and `DEDENT`.
+- Four-space indentation alignment and rejection of tab characters outside comments.
+- `#` comments, including inline and comment-only lines.
+- Source-positioned lexical errors with fail-fast behavior.
+- Incremental token emission without constructing a complete token list.
+
+String literals, operators, punctuation, and other planned language constructs remain to be implemented.
+
+### Token representation
+
+Each token contains:
+
+- A `TokenKind` identifying its category.
+- A `Lexeme` containing the corresponding source text when applicable.
+- A `Position` identifying the token's starting line and column.
+
+`TokenKind` uses a `uint8`-backed enumeration. Its `String()` method preserves readable token names in diagnostics and debugging output. The zero value, `TokenInvalid`, represents an invalid or uninitialized token kind.
+
+The current token structure occupies 40 bytes on the benchmarked linux/amd64 environment, compared with 48 bytes for the earlier string-backed representation.
+
+Token lexemes are represented using Go string slices of the original source where applicable, avoiding per-token copies of source text. Complete start/end source spans remain a planned frontend enhancement.
+
+### Indentation and pending tokens
+
+The lexer maintains an indentation stack, initially containing the base indentation level of zero. Indentation increases generate `INDENT` tokens; decreases generate the necessary `DEDENT` tokens. Remaining indentation levels are closed at end of file.
+
+Generated indentation tokens are stored in a reusable pending-token queue. An index tracks the next unread token, and the queue resets its length after draining while retaining its backing storage.
+
+The indentation stack starts with capacity for four entries, including the base indentation level. Its capacity grows automatically when deeper nesting requires it.
+
+### Complexity and measured performance
+
+For source length `N`, the lexer operates in O(N) time overall. Its auxiliary working space is O(d + q), where `d` is indentation depth and `q` is the maximum number of pending tokens, excluding source storage and returned tokens retained by callers.
+
+The October 2026 performance audit measured:
+
+| Metric | Initial implementation | Optimized implementation |
+|---|---:|---:|
+| Mixed-source execution time | ~699 ns/op | ~644 ns/op |
+| Mixed-source allocation volume | 248 B/op | 80 B/op |
+| Mixed-source allocation count | 7 allocs/op | 2 allocs/op |
+| Token structure size | 48 bytes | 40 bytes |
+
+Benchmarks were performed on linux/amd64 with an Intel Core Ultra 7 155H processor. Runtime measurements are approximate and subject to benchmark variability.
+
+A separate scaling benchmark, using repeated source samples from 138 bytes to 138 KB, showed approximately linear execution time and constant allocation counts for the tested bounded-indentation workload.
+
+These measurements characterize the current lexer, not the performance of the future parser, compiler, or virtual machine. Benchmarks are maintained in `internal/lexer/lexer_bench_test.go`.
 
 ## Runtime value model
 

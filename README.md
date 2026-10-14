@@ -2,7 +2,7 @@
 
 **Eloque** is a proposed general-purpose programming language with structured, conversational-English-inspired syntax and precise, statically checked semantics. It is intended to be approachable for beginners while providing predictable diagnostics and tooling for AI-assisted development.
 
-> **Status:** Design / pre-implementation. Eloque is a working name, and the `.elq` extension and `eloque` CLI name remain provisional. The examples below are **illustrative, not executable**.
+> **Status:** Early development — Milestone 1 (Lexer) in progress. Eloque is a working name, and the `.elq` extension and `eloque` CLI name remain provisional. Initial token scanning and lexical diagnostics are implemented and tested, but the language is not yet executable. The examples below are **illustrative, not executable**.
 
 ## A glimpse of Eloque
 

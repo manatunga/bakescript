@@ -1,6 +1,6 @@
 # Eloque Roadmap
 
-**Status:** Proposed, pre-implementation roadmap. Milestones and versions are planning aids, not release commitments. Eloque, `.elq`, and the CLI name remain provisional.
+**Status:** Active implementation roadmap — M0 completed; M1 (Frontend foundations) in progress. Milestones and versions are planning aids, not release commitments. Eloque, `.elq`, and the CLI name remain provisional.
 
 ## Delivery principles
 
@@ -29,6 +29,42 @@ These are development checkpoints, **not** promises that each becomes a public r
 | **M9 — Concurrency and agent safeguards (later)** | Design ownership/references, safe task execution, configurable sandbox limits | Prototype and validate semantics before committing public syntax |
 
 The order may change where dependencies demand it. In particular, implement enough list/iterator support before `for each`, and add type rules **with** each runtime feature rather than deferring a large checker rewrite.
+
+## Current implementation progress
+
+### M0 — Foundation: Completed
+
+- Go module and initial repository structure established.
+- Minimal CLI skeleton implemented and tested.
+- Initial architecture, language specification, roadmap, and design decisions established.
+- Go test infrastructure operational.
+
+### M1 — Frontend foundations: In progress
+
+**Lexer functionality implemented:**
+
+- Initial keywords, ASCII identifiers, and decimal integers.
+- Source-position tracking and lexical diagnostics.
+- Newline, indentation, and dedentation tokens.
+- Four-space indentation validation and tab rejection.
+- Inline and standalone comments.
+- Unit tests for token scanning, invalid literals, indentation, and comments.
+
+**Lexer performance work completed:**
+
+- Reusable pending-token queue and indentation-stack storage.
+- Compact integer-backed token kinds.
+- Profiling, allocation analysis, and reproducible benchmarks.
+- Scaling measurements across source samples from 138 bytes to 138 KB.
+
+**Remaining M1 work:**
+
+- Complete lexical support for the selected initial grammar.
+- Implement the parser and AST.
+- Add syntax diagnostics and frontend conformance fixtures.
+- Validate the frontend against representative `.elq` programs.
+
+M1 remains incomplete. The lexer supports only a subset of the language specification, and Eloque cannot yet execute programs.
 
 ## Public release planning
 
@@ -59,7 +95,7 @@ Learn concepts **just before using them**:
 - Error returns and error wrapping.
 - Table-driven tests.
 - Rune/UTF-8 handling when implementing strings.
-- Profiling and benchmarks after a working interpreter exists.
+- Component-level profiling and benchmarks as soon as meaningful implementations exist; end-to-end interpreter benchmarks after the first working VM.
 
 Do not require a lengthy Go course before M0. Introduce small Go exercises alongside real compiler tasks, and favor guided implementation over copying a completed compiler.
 
@@ -122,9 +158,12 @@ Eloque intends to use Semantic Versioning as a guideline:
 
 ## Immediate next steps
 
-- [ ] Review and commit updated `LANGUAGE_SPEC.md`, `DESIGN_DECISIONS.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `TECHNICAL_BACKLOG.md`, and `README.md`.
-- [ ] Clone the existing GitHub repository locally using Git.
-- [ ] Confirm Go installation and initialize `go.mod` **only if it does not already exist**.
-- [ ] Build a minimal CLI skeleton and write its first Go test.
-- [ ] Begin token and indentation fixtures for the deliberately small M1 grammar.
-- [ ] Expand grammar and checker together as each executable feature is introduced.
+- [x] Establish the Go module and repository structure.
+- [x] Build and test the minimal CLI skeleton.
+- [x] Implement and test the initial lexer token categories.
+- [x] Implement indentation handling and lexical diagnostics for the supported subset.
+- [x] Establish lexer profiling and scaling benchmarks.
+- [ ] Complete the remaining lexer functionality for the selected M1 grammar.
+- [ ] Implement the initial parser and AST.
+- [ ] Add syntax diagnostics and frontend conformance fixtures.
+- [ ] Expand grammar and static-checking rules alongside subsequent executable features.

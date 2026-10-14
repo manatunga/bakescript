@@ -42,6 +42,7 @@
 | D-032 | Decided | Normal execution is sequential; runtime exceptions include source locations; structured diagnostics are required for tooling. |
 | D-033 | Decided | Configurable sandbox limits are supported by design; no arbitrary universal instruction limit for normal CLI runs. |
 | D-034 | Decided | Decimal integer literals prohibit leading zeros except for `0`. A digit sequence immediately followed by an ASCII letter or underscore is a lexical error; invalid-suffix diagnostics take precedence over leading-zero diagnostics. The initial lexer reports source-positioned errors and stops at the first lexical error; multi-error recovery is deferred. |
+| D-035 | Decided (implementation) | The Go lexer represents token kinds using a `uint8`-backed enumeration, reserving zero for `TokenInvalid`. A `String()` method preserves readable token names. The lexer emits tokens incrementally and reuses indentation-stack and pending-token-queue storage to reduce allocations. This is an internal representation decision, not a language-level semantic rule. |
 
 ## Superseded syntax and semantics
 

@@ -2,19 +2,52 @@ package lexer
 
 // TokenKind identifies the lexical category of a token.
 // Each category represents a keyword, literal, identifier, or structural token.
-type TokenKind string
+type TokenKind uint8
 
 // Token kinds currently supported by Eloque's lexer.
+// Each kind has a compact integer representation.
 // Additional kinds will be introduced as the language's syntax is implemented.
 const (
-	TokenLet     TokenKind = "LET"
-	TokenBe      TokenKind = "BE"
-	TokenSay     TokenKind = "SAY"
-	TokenIdent   TokenKind = "IDENT"
-	TokenInt     TokenKind = "INT"
-	TokenNewline TokenKind = "NEWLINE"
-	TokenEOF     TokenKind = "EOF"
+	TokenInvalid TokenKind = iota
+	TokenLet
+	TokenBe
+	TokenSay
+	TokenIdent
+	TokenInt
+	TokenNewline
+	TokenEOF
+	TokenIndent
+	TokenDedent
 )
+
+// String returns the human-readable name of a token kind.
+// Unknown values are represented as UNKNOWN.
+func (kind TokenKind) String() string {
+	switch kind {
+	case TokenInvalid:
+		return "INVALID"
+	case TokenLet:
+		return "LET"
+	case TokenBe:
+		return "BE"
+	case TokenSay:
+		return "SAY"
+	case TokenIdent:
+		return "IDENT"
+	case TokenInt:
+		return "INT"
+	case TokenNewline:
+		return "NEWLINE"
+	case TokenEOF:
+		return "EOF"
+	case TokenIndent:
+		return "INDENT"
+	case TokenDedent:
+		return "DEDENT"
+	default:
+		return "UNKNOWN"
+	}
+}
 
 // Position identifies a location in Eloque source code.
 // Line and column numbers are 1-based.
