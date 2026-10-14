@@ -14,10 +14,21 @@ const (
 	TokenSay
 	TokenIdent
 	TokenInt
+	TokenString
 	TokenNewline
 	TokenEOF
 	TokenIndent
 	TokenDedent
+	TokenColon
+	TokenLeftParen
+	TokenRightParen
+	TokenPlus
+	TokenMinus
+	TokenStar
+	TokenPower
+	TokenSlash
+	TokenFloorDiv
+	TokenPercent
 )
 
 // String returns the human-readable name of a token kind.
@@ -36,6 +47,8 @@ func (kind TokenKind) String() string {
 		return "IDENT"
 	case TokenInt:
 		return "INT"
+	case TokenString:
+		return "STRING"
 	case TokenNewline:
 		return "NEWLINE"
 	case TokenEOF:
@@ -44,6 +57,26 @@ func (kind TokenKind) String() string {
 		return "INDENT"
 	case TokenDedent:
 		return "DEDENT"
+	case TokenColon:
+		return "COLON"
+	case TokenLeftParen:
+		return "LEFT_PAREN"
+	case TokenRightParen:
+		return "RIGHT_PAREN"
+	case TokenPlus:
+		return "PLUS"
+	case TokenMinus:
+		return "MINUS"
+	case TokenStar:
+		return "STAR"
+	case TokenPower:
+		return "POWER"
+	case TokenSlash:
+		return "SLASH"
+	case TokenFloorDiv:
+		return "FLOOR_DIV"
+	case TokenPercent:
+		return "PERCENT"
 	default:
 		return "UNKNOWN"
 	}
@@ -56,13 +89,20 @@ type Position struct {
 	Column int
 }
 
+// Span identifies a half-open range in Eloque source code.
+// Start is inclusive and End is exclusive.
+type Span struct {
+	Start Position
+	End   Position
+}
+
 // Token represents a recognized unit of Eloque source code.
-// Lexeme preserves the original source text, while Position records
-// the location of its first character.
+// Kind identifies its lexical category, and Lexeme preserves the
+// original source text. Span records its half-open source range.
 type Token struct {
-	Kind     TokenKind
-	Lexeme   string
-	Position Position
+	Kind   TokenKind
+	Lexeme string
+	Span   Span
 }
 
 // lookupIdentifier determines whether a scanned word is a reserved keyword.

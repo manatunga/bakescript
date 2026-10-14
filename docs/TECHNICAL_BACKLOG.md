@@ -93,7 +93,7 @@ At each milestone, inspect items whose triggers have arrived. Record the decisio
 - **Baseline:** String-backed token kinds, an indentation stack with minimal initial capacity, and a pending-token queue that discarded reusable backing storage after draining, causing repeated allocations.
 - **Trigger:** Initial M1 lexer implementation and performance profiling.
 - **Decision:** Use `uint8`-backed token kinds with readable names, reuse pending-token queue storage through an indexed queue, and preallocate modest indentation-stack capacity.
-- **Evidence:** Mixed-source allocations decreased from 248 B/op and 7 allocs/op to 80 B/op and 2 allocs/op. Token structure size decreased from 48 to 40 bytes on amd64. Scaling benchmarks from 138 bytes to 138 KB showed approximately linear execution time, with constant allocation counts for the tested bounded-depth workload.
+- **Evidence:** Mixed-source allocations decreased from 248 B/op and 7 allocs/op to 80 B/op and 2 allocs/op. Token structure size decreased from 48 to 40 bytes on amd64. Scaling benchmarks from 138 bytes to 138 KB showed approximately linear execution time, with constant allocation counts for the tested bounded-depth workload. The M1 completion audit reconfirmed approximately linear scaling across 138-byte to 138-KB benchmark inputs. The saved ten-run baseline reports 96 B/op and 2 allocs/op for mixed input, with approximately 695 µs/op for the ×1000 scaling benchmark. The benchmark baseline is retained for future comparisons.
 - **Complexity:** O(N) overall scanning time; O(d + q) auxiliary working space, excluding source storage and caller-retained tokens.
 - **Criterion:** Maintain correctness, predictable linear scaling, and low allocation overhead without introducing unnecessary implementation complexity.
 - **Next action:** Retain the benchmark suite and reprofile when new lexical features materially change scanner behavior.
@@ -104,7 +104,7 @@ At each milestone, inspect items whose triggers have arrived. Record the decisio
 ### TB-010 — Conversational grammar and call parsing
 - **Status:** Review required.
 - **Baseline:** `name with (...)` for calls, including zero arguments; multiword operators recognized by the parser.
-- **Trigger:** Before expression parsing in M1.
+- **Trigger:** Before implementing expression parsing in the parser milestone. Finalize call grammar, Pratt binding powers, exponentiation precedence and associativity, and interactions with unary minus before implementing the relevant parser rules.
 - **Method:** Write grammar and conformance fixtures for nested calls, named/default arguments, precedence, grouping, indexing and method calls.
 - **Criterion:** Deterministic, unambiguous parsing and precise diagnostics.
 - **Note:** The old `call ... with ...` and bare built-in invocation debate is superseded; do not treat it as active syntax.
@@ -183,6 +183,8 @@ At each milestone, inspect items whose triggers have arrived. Record the decisio
 - **Method:** Define stable error codes, severity, file/line/column/spans, related locations and optional suggested fixes.
 - **Criterion:** Diagnostics are actionable, deterministic and easy to parse without requiring prose interpretation.
 - **Evidence:** Pending.
+- **M1 progress:** Tokens now carry half-open source spans, and lexical errors report source positions. The lexer currently uses fail-fast diagnostics.
+- **Next action:** Preserve source spans through AST construction and define an initial structured diagnostic representation when parser and checker errors are introduced. Finalize the broader machine-readable schema before M8 tooling.
 
 ### TB-020 — Sandboxed execution budgets
 - **Status:** Committed long-term capability; design review required.
@@ -203,7 +205,9 @@ At each milestone, inspect items whose triggers have arrived. Record the decisio
 ## Milestone review checklist
 
 - [x] **M1 lexer performance:** TB-022 token representation, allocation efficiency, and scaling review.
-- [ ] **M1:** TB-010 grammar; begin TB-019 source spans.
+- [x] **M1:** Begin TB-019 source spans through lexer tokens.
+- [ ] **Parser milestone:** Review TB-010 call grammar, exponentiation, and Pratt precedence before expression parsing.
+- [ ] **Parser/checker integration:** Extend TB-019 diagnostics to AST spans and structured parser/checker errors.
 - [ ] **Before M2:** TB-008 values, TB-012 checker, TB-013 numeric behavior, TB-011 scope.
 - [ ] **After working M2:** TB-001 stack/register review; TB-007 benchmark baseline.
 - [ ] **Before M5:** TB-014 collections/immutability; TB-015 Unicode.

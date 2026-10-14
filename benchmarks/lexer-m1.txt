@@ -1,0 +1,66 @@
+goos: linux
+goarch: amd64
+pkg: github.com/manatunga/eloque/internal/lexer
+cpu: Intel(R) Core(TM) Ultra 7 155H
+BenchmarkNextToken-22           	 1708971	       698.3 ns/op	 197.62 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextToken-22           	 1782542	       674.8 ns/op	 204.51 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextToken-22           	 1799800	       673.6 ns/op	 204.86 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextToken-22           	 1763233	       672.3 ns/op	 205.27 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextToken-22           	 1509318	       786.7 ns/op	 175.42 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextToken-22           	 1575538	       759.8 ns/op	 181.63 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextToken-22           	 1553398	       768.1 ns/op	 179.66 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextToken-22           	 1571487	       771.4 ns/op	 178.89 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextToken-22           	 1685424	       722.1 ns/op	 191.11 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextToken-22           	 1508310	       794.5 ns/op	 173.70 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenFlat-22       	 2221234	       530.5 ns/op	 152.69 MB/s	      32 B/op	       1 allocs/op
+BenchmarkNextTokenFlat-22       	 2292702	       522.8 ns/op	 154.92 MB/s	      32 B/op	       1 allocs/op
+BenchmarkNextTokenFlat-22       	 2252071	       533.0 ns/op	 151.97 MB/s	      32 B/op	       1 allocs/op
+BenchmarkNextTokenFlat-22       	 2179734	       539.4 ns/op	 150.16 MB/s	      32 B/op	       1 allocs/op
+BenchmarkNextTokenFlat-22       	 2276854	       516.7 ns/op	 156.76 MB/s	      32 B/op	       1 allocs/op
+BenchmarkNextTokenFlat-22       	 2348196	       528.9 ns/op	 153.14 MB/s	      32 B/op	       1 allocs/op
+BenchmarkNextTokenFlat-22       	 2226994	       537.9 ns/op	 150.57 MB/s	      32 B/op	       1 allocs/op
+BenchmarkNextTokenFlat-22       	 2155568	       553.4 ns/op	 146.38 MB/s	      32 B/op	       1 allocs/op
+BenchmarkNextTokenFlat-22       	 2237566	       533.5 ns/op	 151.84 MB/s	      32 B/op	       1 allocs/op
+BenchmarkNextTokenFlat-22       	 2249227	       536.7 ns/op	 150.91 MB/s	      32 B/op	       1 allocs/op
+BenchmarkNextTokenScaling/x1-22 	 1465390	       817.4 ns/op	 168.84 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1-22 	 1424343	       822.7 ns/op	 167.74 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1-22 	 1563421	       747.0 ns/op	 184.73 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1-22 	 1691064	       711.5 ns/op	 193.95 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1-22 	 1634830	       734.7 ns/op	 187.82 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1-22 	 1636852	       729.3 ns/op	 189.22 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1-22 	 1603461	       771.5 ns/op	 178.87 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1-22 	 1652725	       728.5 ns/op	 189.43 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1-22 	 1613296	       739.4 ns/op	 186.64 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1-22 	 1606870	       746.4 ns/op	 184.88 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x10-22         	  175927	      7387 ns/op	 186.82 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x10-22         	  154159	      6810 ns/op	 202.63 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x10-22         	  181329	      6822 ns/op	 202.27 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x10-22         	  174075	      7179 ns/op	 192.22 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x10-22         	  157404	      7109 ns/op	 194.12 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x10-22         	  178248	      6826 ns/op	 202.17 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x10-22         	  182455	      6742 ns/op	 204.68 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x10-22         	  162798	      7243 ns/op	 190.54 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x10-22         	  177187	      6810 ns/op	 202.64 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x10-22         	  179211	      6950 ns/op	 198.57 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x100-22        	   17938	     66816 ns/op	 206.54 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x100-22        	   17076	     69652 ns/op	 198.13 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x100-22        	   15559	     76656 ns/op	 180.03 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x100-22        	   15940	     75597 ns/op	 182.55 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x100-22        	   15685	     74404 ns/op	 185.47 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x100-22        	   17178	     68690 ns/op	 200.90 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x100-22        	   17042	     69002 ns/op	 199.99 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x100-22        	   17862	     69713 ns/op	 197.95 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x100-22        	   17247	     68639 ns/op	 201.05 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x100-22        	   17808	     67660 ns/op	 203.96 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1000-22       	    1686	    703330 ns/op	 196.21 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1000-22       	    1621	    736712 ns/op	 187.32 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1000-22       	    1761	    683310 ns/op	 201.96 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1000-22       	    1738	    686404 ns/op	 201.05 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1000-22       	    1797	    702896 ns/op	 196.33 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1000-22       	    1894	    667361 ns/op	 206.78 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1000-22       	    1848	    660552 ns/op	 208.92 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1000-22       	    1893	    680444 ns/op	 202.81 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1000-22       	    1552	    775556 ns/op	 177.94 MB/s	      96 B/op	       2 allocs/op
+BenchmarkNextTokenScaling/x1000-22       	    1575	    744070 ns/op	 185.47 MB/s	      96 B/op	       2 allocs/op
+PASS
+ok  	github.com/manatunga/eloque/internal/lexer	72.181s

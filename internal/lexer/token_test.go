@@ -3,27 +3,33 @@ package lexer
 import "testing"
 
 func TestTokenFields(t *testing.T) {
-	position := Position{
-		Line:   1,
-		Column: 1,
+	span := Span{
+		Start: Position{Line: 1, Column: 1},
+		End:   Position{Line: 1, Column: 4},
 	}
 	token := Token{
-		Kind:     TokenLet,
-		Lexeme:   "let",
-		Position: position,
+		Kind:   TokenLet,
+		Lexeme: "let",
+		Span:   span,
 	}
 
 	if token.Kind != TokenLet {
-		t.Errorf("expected %q, got %q", TokenLet, token.Kind)
+		t.Errorf("expected kind %q, got %q", TokenLet, token.Kind)
 	}
 	if token.Lexeme != "let" {
-		t.Errorf("expected %q, got %q", "let", token.Lexeme)
+		t.Errorf("expected lexeme %q, got %q", "let", token.Lexeme)
 	}
-	if token.Position.Line != 1 {
-		t.Errorf("expected %d, got %d", 1, token.Position.Line)
+	if token.Span.Start.Line != 1 {
+		t.Errorf("expected start line%d, got %d", 1, token.Span.Start.Line)
 	}
-	if token.Position.Column != 1 {
-		t.Errorf("expected %d, got %d", 1, token.Position.Column)
+	if token.Span.Start.Column != 1 {
+		t.Errorf("expected start column %d, got %d", 1, token.Span.Start.Column)
+	}
+	if token.Span.End.Line != 1 {
+		t.Errorf("expected end line %d, got %d", 1, token.Span.End.Line)
+	}
+	if token.Span.End.Column != 4 {
+		t.Errorf("expected end column %d, got %d", 4, token.Span.End.Column)
 	}
 }
 

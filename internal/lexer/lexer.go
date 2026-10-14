@@ -12,17 +12,22 @@ package lexer
 // pendingIndex identifies the next unread token in pendingTokens.
 // Once the queue is drained, both the index and slice length are reset,
 // allowing the existing backing array to be reused.
+// parenDepth tracks the number of unmatched opening parentheses.
+// parenPositions records their source positions so an unclosed
+// parenthesis can be reported accurately at EOF.
 type Lexer struct {
-	source        string
-	start         int
-	current       int
-	line          int
-	column        int
-	startPosition Position
-	indentStack   []int
-	atLineStart   bool
-	pendingTokens []Token
-	pendingIndex  int
+	source         string
+	start          int
+	current        int
+	line           int
+	column         int
+	startPosition  Position
+	indentStack    []int
+	parenDepth     int
+	atLineStart    bool
+	pendingTokens  []Token
+	pendingIndex   int
+	parenPositions []Position
 }
 
 // New creates a lexer for the provided source text.
@@ -117,9 +122,12 @@ func (l *Lexer) markTokenStart() {
 // The token retains its original lexeme and saved starting position.
 func (l *Lexer) makeToken(kind TokenKind) Token {
 	return Token{
-		Kind:     kind,
-		Lexeme:   l.source[l.start:l.current],
-		Position: l.startPosition,
+		Kind:   kind,
+		Lexeme: l.source[l.start:l.current],
+		Span: Span{
+			Start: l.startPosition,
+			End:   Position{Line: l.line, Column: l.column},
+		},
 	}
 }
 
@@ -206,9 +214,13 @@ func (l *Lexer) processIndentation(width int) error {
 	currentIndent := l.indentStack[len(l.indentStack)-1]
 	if width > currentIndent {
 		l.indentStack = append(l.indentStack, width)
+		position := Position{Line: l.line, Column: l.column}
 		l.pendingTokens = append(l.pendingTokens, Token{
-			Kind:     TokenIndent,
-			Position: Position{Line: l.line, Column: l.column},
+			Kind: TokenIndent,
+			Span: Span{
+				Start: position,
+				End:   position,
+			},
 		})
 	}
 	if width < currentIndent {
@@ -225,9 +237,13 @@ func (l *Lexer) processIndentation(width int) error {
 		dedentCount := len(l.indentStack) - 1 - index
 		l.indentStack = l.indentStack[:index+1]
 		for range dedentCount {
+			position := Position{Line: l.line, Column: l.column}
 			l.pendingTokens = append(l.pendingTokens, Token{
-				Kind:     TokenDedent,
-				Position: Position{Line: l.line, Column: l.column},
+				Kind: TokenDedent,
+				Span: Span{
+					Start: position,
+					End:   position,
+				},
 			})
 		}
 	}
@@ -244,6 +260,46 @@ func (l *Lexer) skipComment() {
 	}
 }
 
+// scanString scans a string literal delimited by quote, assuming the opening
+// quote has already been consumed. It preserves escape sequences in the token
+// lexeme and reports invalid escapes, newlines, or EOF before the closing quote
+// as lexical errors.
+func (l *Lexer) scanString(quote byte) (Token, error) {
+	isValidEscape := [256]bool{
+		'"': true, '\'': true, '\\': true, 'n': true, 't': true, 'r': true,
+	}
+
+	for l.peek() != quote {
+		if l.isAtEnd() || l.peek() == '\n' {
+			return Token{}, &LexError{
+				Position: l.startPosition,
+				Message:  "unterminated string literal",
+			}
+		}
+		if l.peek() == '\\' {
+			escapePosition := Position{Line: l.line, Column: l.column}
+			l.advance()
+			if l.isAtEnd() || l.peek() == '\n' {
+				return Token{}, &LexError{
+					Position: escapePosition,
+					Message:  "invalid escape sequence",
+				}
+			}
+
+			if !isValidEscape[l.peek()] {
+				return Token{}, &LexError{
+					Position: escapePosition,
+					Message:  "invalid escape sequence",
+				}
+			}
+		}
+		l.advance()
+		continue
+	}
+	l.advance()
+	return l.makeToken(TokenString), nil
+}
+
 // nextToken returns the next token in source order, emitting queued
 // structural tokens before scanning additional source text. At the start
 // of a non-blank line, it measures and processes indentation before
@@ -256,7 +312,7 @@ func (l *Lexer) nextToken() (Token, error) {
 		return token, nil
 	}
 
-	if l.atLineStart {
+	if l.atLineStart && l.parenDepth == 0 {
 		width := l.measureIndentation()
 
 		if l.peek() != '\n' && l.peek() != '#' && !l.isAtEnd() {
@@ -275,14 +331,27 @@ func (l *Lexer) nextToken() (Token, error) {
 		l.skipHorizontalWhitespace()
 		l.markTokenStart()
 
-		if l.peek() != '#' {
-			break
+		if l.peek() == '#' {
+			l.skipComment()
+			continue
 		}
 
-		l.skipComment()
+		if l.peek() == '\n' && l.parenDepth > 0 {
+			l.advance()
+			l.atLineStart = true
+			continue
+		}
+
+		break
 	}
 
 	if l.isAtEnd() {
+		if l.parenDepth > 0 {
+			return Token{}, &LexError{
+				Position: l.parenPositions[len(l.parenPositions)-1],
+				Message:  "unclosed opening parenthesis",
+			}
+		}
 		if len(l.indentStack) > 1 {
 			if err := l.processIndentation(0); err != nil {
 				return Token{}, err
@@ -295,9 +364,62 @@ func (l *Lexer) nextToken() (Token, error) {
 	}
 
 	char := l.advance()
+
+	if char != '\n' {
+		l.atLineStart = false
+	}
 	if char == '\n' {
 		l.atLineStart = true
 		return l.makeToken(TokenNewline), nil
+	}
+
+	if char == ':' {
+		return l.makeToken(TokenColon), nil
+	}
+
+	if char == '+' {
+		return l.makeToken(TokenPlus), nil
+	}
+	if char == '-' {
+		return l.makeToken(TokenMinus), nil
+	}
+	if char == '*' {
+		if l.peek() == '*' {
+			l.advance()
+			return l.makeToken(TokenPower), nil
+		}
+		return l.makeToken(TokenStar), nil
+	}
+	if char == '/' {
+		if l.peek() == '/' {
+			l.advance()
+			return l.makeToken(TokenFloorDiv), nil
+		}
+		return l.makeToken(TokenSlash), nil
+	}
+	if char == '%' {
+		return l.makeToken(TokenPercent), nil
+	}
+
+	if char == '"' || char == '\'' {
+		return l.scanString(char)
+	}
+
+	if char == '(' {
+		l.parenDepth++
+		l.parenPositions = append(l.parenPositions, l.startPosition)
+		return l.makeToken(TokenLeftParen), nil
+	}
+	if char == ')' {
+		if l.parenDepth == 0 {
+			return Token{}, &LexError{
+				Position: l.startPosition,
+				Message:  "unmatched closing parenthesis",
+			}
+		}
+		l.parenDepth--
+		l.parenPositions = l.parenPositions[:len(l.parenPositions)-1]
+		return l.makeToken(TokenRightParen), nil
 	}
 
 	if isIdentifierStart(char) {

@@ -12,11 +12,12 @@ Eloque is a general-purpose programming language with structured conversational 
 
 ## 2. Lexical rules [Decided]
 
-- Significant indentation: **four spaces per level**; tabs are invalid. A `:` introduces an indented block. Blank and comment-only lines do not affect indentation.
-- One statement per logical line; implicit continuation within `(...)`, `[...]`, `{...}`.
+
+- Significant indentation uses spaces, with widths aligned to multiples of four; tabs are invalid. An increase to any greater four-space-aligned width introduces one indentation level (`INDENT`), regardless of the size of the increase. A decrease must return to a previously active indentation width, emitting one `DEDENT` for each exited level. A `:` introduces an indented block. Blank and comment-only lines do not affect indentation.
+- One statement per logical line. Newlines and indentation are insignificant inside matched parentheses `(...)`, allowing multiline expressions and inline comments. Implicit continuation inside `[...]` and `{...}` is planned for their respective syntax implementations.
 - `#` starts a line comment outside a string.
 - Identifiers use ASCII letters, digits, and `_`, cannot start with a digit, and are case-sensitive. Reserved keywords cannot be identifiers. Snake_case is the recommended naming convention.
-- Strings use double quotes and support escapes and `{expression}` interpolation. Precise escaping and Unicode grapheme rules remain to be specified.
+- Strings may use single (`'`) or double (`"`) quotes. The matching quote terminates the literal. The lexer recognizes the escapes `\\`, `\"`, `\'`, `\n`, `\t`, and `\r`, preserving their original source spelling in token lexemes. String interpolation using `{expression}` is planned but is not implemented by the initial lexer. Precise interpolation and Unicode grapheme rules remain to be specified.
 - Multiword operators are parsed from individual keyword tokens, e.g. `is greater than`.
 - Decimal integer literals consist of ASCII digits. Leading zeros are forbidden except for the literal `0` itself. A digit sequence immediately followed by an ASCII letter or underscore is a malformed numeric literal and is rejected during lexical analysis (e.g. `123abc`, `42_name`). When both an invalid identifier suffix and leading zeros occur (e.g. `007abc`), the invalid-suffix diagnostic takes precedence.
 
@@ -60,6 +61,8 @@ Comparisons: `is`, `is not`, `is greater than`, `is less than`, `is at least`, `
 Boolean operations: `not`, `and`, `or`, with short-circuit evaluation. `not age is at least 18` means `not (age is at least 18)`.
 
 **Precedence, highest to lowest:** grouping/call/access; unary numeric minus; multiplication/division/modulo; addition/subtraction; ordering; equality; `not` over a comparison; `and`; `or`. Parentheses override precedence. Same-precedence arithmetic operators associate left-to-right. Operands and call arguments evaluate left-to-right, except short-circuiting operands that are skipped. The formal Pratt binding-power table will refine interactions between `not` and other expressions before parser implementation.
+
+**Exponentiation:** The lexer recognizes `**` as a distinct operator. Its precedence relative to unary minus and its associativity remain provisional and must be finalized before arithmetic expression parsing.
 
 ## 6. Conditions and loops [Decided]
 
