@@ -1,3 +1,7 @@
+<p align="center">
+  <img src=".github/branding/readme-banner.png" alt="Eloque Programming Language Banner" width="100%">
+</p>
+
 # Eloque
 
 **Eloque** is a proposed general-purpose programming language with structured, conversational-English-inspired syntax and precise, statically checked semantics. It is intended to be approachable for beginners while providing predictable diagnostics and tooling for AI-assisted development.
