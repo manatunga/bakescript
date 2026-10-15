@@ -1,6 +1,6 @@
 # Eloque Architecture
 
-**Status:** Early implementation — Milestone 1 (Lexer) in progress. The working language name, `.elq` extension, and CLI command remain provisional. The initial lexer is implemented and tested, but the parser, static checker, bytecode compiler, and VM are not yet operational. This document distinguishes the target architecture from implemented functionality.
+**Status:** Early implementation — Milestone 1 (Frontend foundations) in progress. The lexer is implemented, tested, and benchmarked for its selected M1 token coverage. The initial AST structures, shared source-location types, parser token-navigation infrastructure, and fail-fast syntax diagnostic representation are implemented and tested. Expression and statement parsing, frontend conformance, the static checker, bytecode compiler, and VM are not yet operational. The working language name, `.elq` extension, and CLI command remain provisional.
 
 ## Goals and boundaries
 
@@ -35,7 +35,7 @@ Stack-based Go VM
 Program output or typed runtime error
 ```
 
-**Static checking is not optional or gradual.** Eloque permits local type inference, but programs with unresolved type errors must not proceed to normal bytecode execution. A future `eloque check` command should run the frontend without executing user code. The frontend should collect useful diagnostics where safe instead of aborting at the first error.
+**Static checking is not optional or gradual.** Eloque permits local type inference, but programs with unresolved type errors must not proceed to normal bytecode execution. A future `eloque check` command should run the frontend without executing user code. The initial lexer and parser use fail-fast diagnostics: the first lexical or syntax error terminates the corresponding operation. Multi-error collection and recovery are deferred until a dedicated frontend enhancement.
 
 The implementation may initially recognize only a small subset of the full design. Unsupported syntax should be rejected clearly, never silently accepted with guessed semantics.
 
@@ -85,46 +85,83 @@ A single implementation package may initially handle more than one responsibilit
 - Imports initialize modules once per execution; reject circular imports in the initial design.
 - No automatic `main` invocation.
 
-## Current lexer implementation
+## Current frontend implementation
 
-The lexer is the first implemented stage of Eloque's compilation pipeline. It is written in Go and currently supports a deliberately limited subset of the planned language.
+The lexer is the first implemented compilation stage. The M1-P1 checkpoint also establishes the initial AST and parser infrastructure. These components are implemented in Go, but a complete source-to-AST parsing path is not yet operational.
 
-### Implemented functionality
+### Lexer functionality
 
-- Byte-oriented source scanning with line and column tracking.
-- ASCII identifiers and the initial `let`, `be`, and `say` keywords.
-- Decimal integer literals, including rejection of leading zeros and invalid identifier suffixes.
-- Newline tokens and significant indentation using `INDENT` and `DEDENT`.
-- Four-space indentation alignment and rejection of tab characters outside comments.
+The lexer currently supports:
+
+- Byte-oriented source scanning with 1-based line and column tracking.
+- ASCII identifiers and reserved keywords, including `let`, `be`, `say`, `change`, `to`, `with`, and `giving`.
+- Decimal integer literals, rejecting prohibited leading zeros and invalid identifier suffixes.
+- Single- and double-quoted string literals with validation of the supported escape sequences.
+- Arithmetic operators `+`, `-`, `*`, `**`, `/`, `//`, and `%`.
+- Parentheses and colons.
+- Significant newlines, `INDENT`, and `DEDENT` tokens.
+- Four-space indentation alignment and rejection of invalid indentation.
 - `#` comments, including inline and comment-only lines.
-- Source-positioned lexical errors with fail-fast behavior.
-- Incremental token emission without constructing a complete token list.
+- Suppression of physical newlines inside parentheses.
+- Half-open source spans and positioned lexical errors.
+- Fail-fast lexical analysis.
 
-String literals, operators, punctuation, and other planned language constructs remain to be implemented.
+The lexer recognizes fixed reserved words as dedicated token kinds. Their grammatical roles are determined by the parser. For example, `to` participates in both assignment and function-definition syntax.
 
 ### Token representation
 
 Each token contains:
 
-- A `TokenKind` identifying its category.
-- A `Lexeme` containing the corresponding source text when applicable.
-- A `Position` identifying the token's starting line and column.
+- `Kind`: a `TokenKind` identifying its lexical category.
+- `Lexeme`: the original source text.
+- `Span`: a half-open source range whose start is inclusive and end is exclusive.
 
-`TokenKind` uses a `uint8`-backed enumeration. Its `String()` method preserves readable token names in diagnostics and debugging output. The zero value, `TokenInvalid`, represents an invalid or uninitialized token kind.
+`TokenKind` uses a `uint8`-backed enumeration. Its `String()` method provides readable names for diagnostics and debugging. The zero value, `TokenInvalid`, represents an invalid or uninitialized token kind.
 
-The current token structure occupies 40 bytes on the benchmarked linux/amd64 environment, compared with 48 bytes for the earlier string-backed representation.
+The token representation uses shared source-location types from `internal/source`. Compatibility aliases in the lexer preserve the existing `lexer.Position` and `lexer.Span` names.
 
-Token lexemes are represented using Go string slices of the original source where applicable, avoiding per-token copies of source text. Complete start/end source spans remain a planned frontend enhancement.
+Token lexemes refer to the original Go source string where applicable, avoiding unnecessary copies of source text.
 
 ### Indentation and pending tokens
 
-The lexer maintains an indentation stack, initially containing the base indentation level of zero. Indentation increases generate `INDENT` tokens; decreases generate the necessary `DEDENT` tokens. Remaining indentation levels are closed at end of file.
+The lexer maintains an indentation stack initially containing the base indentation level of zero. Indentation increases generate `INDENT` tokens; decreases generate the necessary `DEDENT` tokens. Remaining indentation levels are closed at end of file.
 
-Generated indentation tokens are stored in a reusable pending-token queue. An index tracks the next unread token, and the queue resets its length after draining while retaining its backing storage.
+Generated structural tokens are stored in a reusable pending-token queue. An index tracks the next unread token, and the queue resets its length after draining while retaining its backing storage.
 
 The indentation stack starts with capacity for four entries, including the base indentation level. Its capacity grows automatically when deeper nesting requires it.
 
-### Complexity and measured performance
+### AST foundations
+
+The `internal/ast` package defines three principal interfaces:
+
+- `Node`: any AST node that exposes its source span.
+- `Expression`: a value-producing syntactic construct.
+- `Statement`: a statement-level construct.
+
+Expression and statement interfaces use package-private marker methods to distinguish their implementations. The `Program` root implements `Node` but is neither an expression nor a statement.
+
+The initial expression nodes are `IntegerLiteral`, `StringLiteral`, `Identifier`, `UnaryExpression`, and `BinaryExpression`. The initial statement nodes are `LetStatement`, `ChangeStatement`, and `SayStatement`.
+
+AST nodes retain their source locations and syntactic relationships without evaluating expressions, resolving names, or performing type checking. Integer literal nodes preserve decimal source text; string literal nodes are designed to hold decoded contents once literal parsing is implemented.
+
+The AST uses interface-based child references. Its structure remains independent of the planned bytecode representation.
+
+### Parser infrastructure and syntax diagnostics
+
+The `internal/parser` package currently accepts an ordered token slice terminated by `TokenEOF`. Its navigation helpers inspect, match, and consume tokens while preserving the terminal EOF position.
+
+The parser also provides a token-expectation helper and a structured `Diagnostic` containing:
+
+- A human-readable message.
+- A source span identifying the error location.
+- Optional expected token kinds.
+- An optional actual token kind.
+
+The initial parser follows a fail-fast contract: the first syntax error terminates parsing, and a malformed program must not be accepted as a successfully parsed AST. Diagnostic accumulation, synchronization, and multi-error recovery are deferred.
+
+The parser does not yet construct expressions or complete programs. Pratt expression parsing, statement parsing, and frontend conformance tests remain M1 work.
+
+### Complexity and measured lexer performance
 
 For source length `N`, the lexer operates in O(N) time overall. Its auxiliary working space is O(d + q), where `d` is indentation depth and `q` is the maximum number of pending tokens, excluding source storage and returned tokens retained by callers.
 
@@ -141,7 +178,7 @@ Benchmarks were performed on linux/amd64 with an Intel Core Ultra 7 155H process
 
 A separate scaling benchmark, using repeated source samples from 138 bytes to 138 KB, showed approximately linear execution time and constant allocation counts for the tested bounded-indentation workload.
 
-These measurements characterize the current lexer, not the performance of the future parser, compiler, or virtual machine. Benchmarks are maintained in `internal/lexer/lexer_bench_test.go`.
+These measurements characterize the lexer baseline before the latest keyword additions, not the performance of the future parser, compiler, or virtual machine. Benchmarks are maintained in `internal/lexer/lexer_bench_test.go`.
 
 ## Runtime value model
 

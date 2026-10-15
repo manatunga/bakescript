@@ -60,9 +60,31 @@ Comparisons: `is`, `is not`, `is greater than`, `is less than`, `is at least`, `
 
 Boolean operations: `not`, `and`, `or`, with short-circuit evaluation. `not age is at least 18` means `not (age is at least 18)`.
 
-**Precedence, highest to lowest:** grouping/call/access; unary numeric minus; multiplication/division/modulo; addition/subtraction; ordering; equality; `not` over a comparison; `and`; `or`. Parentheses override precedence. Same-precedence arithmetic operators associate left-to-right. Operands and call arguments evaluate left-to-right, except short-circuiting operands that are skipped. The formal Pratt binding-power table will refine interactions between `not` and other expressions before parser implementation.
 
-**Exponentiation:** The lexer recognizes `**` as a distinct operator. Its precedence relative to unary minus and its associativity remain provisional and must be finalized before arithmetic expression parsing.
+**Expression precedence, highest to lowest:**
+
+1. Grouping, function calls, and member access.
+2. Exponentiation (`**`), right-associative.
+3. Unary numeric plus and minus (`+`, `-`).
+4. Multiplication, real division, floor division, and remainder (`*`, `/`, `//`, `%`), left-associative.
+5. Addition and subtraction (`+`, `-`), left-associative.
+6. Ordering comparisons (`is greater than`, `is less than`, `is at least`, `is at most`).
+7. Equality comparisons (`is`, `is not`).
+8. Boolean negation (`not`).
+9. Boolean conjunction (`and`).
+10. Boolean disjunction (`or`).
+
+Exponentiation binds more tightly than unary plus or minus on its left, but accepts unary operators on its right. Thus, `-2 ** 2` means `-(2 ** 2)`, `2 ** -3` means `2 ** (-3)`, and `2 ** 3 ** 2` means `2 ** (3 ** 2)`.
+
+Unary plus preserves a numeric operand's value. Unary minus negates it. Both require numeric operands.
+
+Chained comparisons are invalid in v0.1, including chains that mix ordering and equality operators. Parentheses may be used to compare the result of another comparison.
+
+Boolean `not` associates to the right, so `not not ready` means `not (not ready)`. Boolean `and` and `or` short-circuit, evaluating operands from left to right. Other binary arithmetic operands and function-call arguments evaluate from left to right.
+
+Function calls use `with (...)`, including zero-argument calls. Positional arguments must precede named arguments, duplicate named arguments are invalid, and argument expressions may contain nested calls. The parser enforces argument ordering and duplicate names; the static checker validates parameter compatibility.
+
+Multiword comparison operators are recognized by the parser from individual lexical tokens. Incomplete operator phrases produce syntax errors.
 
 ## 6. Conditions and loops [Decided]
 

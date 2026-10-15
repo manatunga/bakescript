@@ -1,5 +1,7 @@
 package lexer
 
+import "github.com/manatunga/eloque/internal/source"
+
 // TokenKind identifies the lexical category of a token.
 // Each category represents a keyword, literal, identifier, or structural token.
 type TokenKind uint8
@@ -29,6 +31,10 @@ const (
 	TokenSlash
 	TokenFloorDiv
 	TokenPercent
+	TokenChange
+	TokenTo
+	TokenWith
+	TokenGiving
 )
 
 // String returns the human-readable name of a token kind.
@@ -77,6 +83,14 @@ func (kind TokenKind) String() string {
 		return "FLOOR_DIV"
 	case TokenPercent:
 		return "PERCENT"
+	case TokenChange:
+		return "CHANGE"
+	case TokenTo:
+		return "TO"
+	case TokenWith:
+		return "WITH"
+	case TokenGiving:
+		return "GIVING"
 	default:
 		return "UNKNOWN"
 	}
@@ -84,17 +98,11 @@ func (kind TokenKind) String() string {
 
 // Position identifies a location in Eloque source code.
 // Line and column numbers are 1-based.
-type Position struct {
-	Line   int
-	Column int
-}
+type Position = source.Position
 
 // Span identifies a half-open range in Eloque source code.
 // Start is inclusive and End is exclusive.
-type Span struct {
-	Start Position
-	End   Position
-}
+type Span = source.Span
 
 // Token represents a recognized unit of Eloque source code.
 // Kind identifies its lexical category, and Lexeme preserves the
@@ -115,6 +123,14 @@ func lookupIdentifier(word string) TokenKind {
 		return TokenBe
 	case "say":
 		return TokenSay
+	case "change":
+		return TokenChange
+	case "to":
+		return TokenTo
+	case "with":
+		return TokenWith
+	case "giving":
+		return TokenGiving
 	default:
 		return TokenIdent
 	}

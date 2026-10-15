@@ -102,13 +102,15 @@ At each milestone, inspect items whose triggers have arrived. Record the decisio
 ## Frontend and language semantics
 
 ### TB-010 — Conversational grammar and call parsing
-- **Status:** Review required.
-- **Baseline:** `name with (...)` for calls, including zero arguments; multiword operators recognized by the parser.
-- **Trigger:** Before implementing expression parsing in the parser milestone. Finalize call grammar, Pratt binding powers, exponentiation precedence and associativity, and interactions with unary minus before implementing the relevant parser rules.
-- **Method:** Write grammar and conformance fixtures for nested calls, named/default arguments, precedence, grouping, indexing and method calls.
-- **Criterion:** Deterministic, unambiguous parsing and precise diagnostics.
-- **Note:** The old `call ... with ...` and bare built-in invocation debate is superseded; do not treat it as active syntax.
-- **Evidence:** Pending.
+
+- **Status:** Initial grammar design resolved; parser implementation pending.
+- **Baseline:** Function calls use `name with (...)`, including zero-argument calls. Function definitions use `to name with (...) giving Type:` where a return type is declared. Multiword operators are recognized according to the documented grammar.
+- **Decision:** The initial expression grammar uses Pratt parsing. Exponentiation is right-associative and binds more tightly than unary negation on its left, while accepting unary expressions on its right. Multiplicative and additive operators are left-associative. Chained comparisons are excluded from the initial grammar.
+- **Evidence:** Expression precedence, associativity, and call syntax are documented in `LANGUAGE_SPEC.md`. The lexer provides the necessary initial arithmetic tokens and reserved grammatical words. Parser expression and call implementations are not yet complete.
+- **Next action:** Implement and test the documented expression grammar in M1-P2. Implement function-call parsing when its scheduled language subset is introduced; do not treat a settled syntax decision as a requirement to implement all call features in M1.
+- **Next review trigger:** Expression parser conformance in M1-P2, followed by function-call implementation in M4.
+- **Criterion:** Deterministic, unambiguous parsing with precise source locations and diagnostics.
+- **Note:** The historical `call ... with ...` and bare built-in invocation alternatives remain superseded.
 
 ### TB-011 — Scope, capture and immutability
 - **Status:** Review required.
@@ -183,8 +185,8 @@ At each milestone, inspect items whose triggers have arrived. Record the decisio
 - **Method:** Define stable error codes, severity, file/line/column/spans, related locations and optional suggested fixes.
 - **Criterion:** Diagnostics are actionable, deterministic and easy to parse without requiring prose interpretation.
 - **Evidence:** Pending.
-- **M1 progress:** Tokens now carry half-open source spans, and lexical errors report source positions. The lexer currently uses fail-fast diagnostics.
-- **Next action:** Preserve source spans through AST construction and define an initial structured diagnostic representation when parser and checker errors are introduced. Finalize the broader machine-readable schema before M8 tooling.
+- **M1 progress:** Tokens carry half-open source spans, and AST nodes expose source spans through a shared source-location model. Lexical errors report source positions. The parser infrastructure defines structured syntax diagnostics with messages, source spans, optional expected token kinds, and optional actual token kinds. Initial lexical and syntax error handling is fail-fast.
+- **Next action:** Verify precise AST span construction and syntax-error locations during M1-P2 through M1-P5. Introduce checker diagnostics alongside semantic analysis in M2. Defer multi-error recovery and finalize the broader machine-readable diagnostic schema before M8 tooling.
 
 ### TB-020 — Sandboxed execution budgets
 - **Status:** Committed long-term capability; design review required.
@@ -206,8 +208,10 @@ At each milestone, inspect items whose triggers have arrived. Record the decisio
 
 - [x] **M1 lexer performance:** TB-022 token representation, allocation efficiency, and scaling review.
 - [x] **M1:** Begin TB-019 source spans through lexer tokens.
-- [ ] **Parser milestone:** Review TB-010 call grammar, exponentiation, and Pratt precedence before expression parsing.
-- [ ] **Parser/checker integration:** Extend TB-019 diagnostics to AST spans and structured parser/checker errors.
+- [x] **M1-P1:** Review TB-010 conversational grammar, exponentiation, and Pratt precedence before expression parsing.
+- [x] **M1-P1:** Establish shared AST source spans and the initial structured parser diagnostic contract under TB-019.
+- [ ] **M1-P2–P5:** Verify parser span accuracy, syntax diagnostics, and frontend conformance.
+- [ ] **M2:** Extend TB-019 diagnostics to name resolution and static type checking.
 - [ ] **Before M2:** TB-008 values, TB-012 checker, TB-013 numeric behavior, TB-011 scope.
 - [ ] **After working M2:** TB-001 stack/register review; TB-007 benchmark baseline.
 - [ ] **Before M5:** TB-014 collections/immutability; TB-015 Unicode.

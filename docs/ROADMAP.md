@@ -41,30 +41,32 @@ The order may change where dependencies demand it. In particular, implement enou
 
 ### M1 — Frontend foundations: In progress
 
-**Lexer functionality implemented:**
+**Lexer checkpoint: Completed**
 
-- Initial keywords, ASCII identifiers, and decimal integers.
-- Source-position tracking and lexical diagnostics.
-- Newline, indentation, and dedentation tokens.
-- Four-space indentation validation and tab rejection.
-- Inline and standalone comments.
-- Unit tests for token scanning, invalid literals, indentation, and comments.
+- Implemented and tested lexical support for the selected initial M1 grammar.
+- Implemented ASCII identifiers, reserved keywords, integer and string literals, arithmetic operators, parentheses, colons, newlines, and indentation tokens.
+- Implemented source spans, lexical diagnostics, comments, indentation validation, and parenthesized line continuation.
+- Completed lexer correctness, race, profiling, allocation, and scaling reviews.
+- Retained reproducible benchmarks for future regression comparisons.
 
-**Lexer performance work completed:**
+**M1-P1 — AST foundations and parser infrastructure: Implemented; final review pending**
 
-- Reusable pending-token queue and indentation-stack storage.
-- Compact integer-backed token kinds.
-- Profiling, allocation analysis, and reproducible benchmarks.
-- Scaling measurements across source samples from 138 bytes to 138 KB.
+- Extracted shared source-position and span types into `internal/source`.
+- Implemented AST interfaces and initial expression, statement, and program nodes.
+- Added AST structural tests for interfaces, spans, ordering, and child references.
+- Implemented parser construction and token-navigation helpers.
+- Implemented structured syntax diagnostics and required-token matching.
+- Established fail-fast syntax-error handling; multi-error recovery remains deferred.
+- Added dedicated lexer token kinds for `change`, `to`, `with`, and `giving`.
 
-**Remaining M1 work:**
+**Remaining M1 checkpoints**
 
-- Complete lexical support for the selected initial grammar.
-- Implement the parser and AST.
-- Add syntax diagnostics and frontend conformance fixtures.
-- Validate the frontend against representative `.elq` programs.
+- **M1-P2 — Expression parsing:** Implement Pratt parsing, grouping, literals, identifiers, unary operators, and arithmetic precedence.
+- **M1-P3 — Statements and program parsing:** Parse the initial `let`, `change`, and `say` statements into complete programs.
+- **M1-P4 — Syntax diagnostics and conformance:** Verify malformed syntax, source locations, and positive/negative grammar fixtures.
+- **M1-P5 — Frontend integration and milestone closure:** Complete lexer–parser integration, end-to-end tests, benchmarks, documentation, and release audit.
 
-M1 remains incomplete. The lexer supports only a subset of the language specification, and Eloque cannot yet execute programs.
+M1 remains incomplete. Eloque does not yet parse complete programs or execute source code.
 
 ## Public release planning
 
@@ -163,7 +165,11 @@ Eloque intends to use Semantic Versioning as a guideline:
 - [x] Implement and test the initial lexer token categories.
 - [x] Implement indentation handling and lexical diagnostics for the supported subset.
 - [x] Establish lexer profiling and scaling benchmarks.
-- [ ] Complete the remaining lexer functionality for the selected M1 grammar.
-- [ ] Implement the initial parser and AST.
-- [ ] Add syntax diagnostics and frontend conformance fixtures.
+- [x] Complete lexer functionality for the selected initial M1 grammar.
+- [x] Implement initial AST nodes and parser navigation infrastructure (M1-P1).
+- [x] Establish the initial structured, fail-fast parser diagnostic contract.
+- [ ] Implement expression parsing with the agreed precedence and associativity rules (M1-P2).
+- [ ] Implement statement and complete-program parsing (M1-P3).
+- [ ] Complete syntax diagnostics and frontend conformance fixtures (M1-P4).
+- [ ] Integrate and validate the complete frontend (M1-P5).
 - [ ] Expand grammar and static-checking rules alongside subsequent executable features.

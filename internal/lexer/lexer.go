@@ -49,14 +49,14 @@ func New(source string) *Lexer {
 // A newline moves the cursor to column 1 of the following line.
 // The caller must ensure the lexer has not reached EOF.
 func (l *Lexer) advance() byte {
-	currentByte := l.source[l.current]
+	currentByte := l.peek()
 	if currentByte == '\n' {
-		l.line += 1
+		l.line++
 		l.column = 1
 	} else {
-		l.column += 1
+		l.column++
 	}
-	l.current += 1
+	l.current++
 	return currentByte
 }
 

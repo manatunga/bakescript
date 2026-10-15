@@ -43,6 +43,8 @@
 | D-033 | Decided | Configurable sandbox limits are supported by design; no arbitrary universal instruction limit for normal CLI runs. |
 | D-034 | Decided | Decimal integer literals prohibit leading zeros except for `0`. A digit sequence immediately followed by an ASCII letter or underscore is a lexical error; invalid-suffix diagnostics take precedence over leading-zero diagnostics. The initial lexer reports source-positioned errors and stops at the first lexical error; multi-error recovery is deferred. |
 | D-035 | Decided (implementation) | The Go lexer represents token kinds using a `uint8`-backed enumeration, reserving zero for `TokenInvalid`. A `String()` method preserves readable token names. The lexer emits tokens incrementally and reuses indentation-stack and pending-token-queue storage to reduce allocations. This is an internal representation decision, not a language-level semantic rule. |
+| D-036 | Decided | `change`, `to`, `with`, and `giving` are reserved keywords represented by dedicated lexer token kinds. They cannot be used as ordinary identifiers. A reserved token may have different grammatical roles depending on context; for example, `to` appears in assignment and function-definition syntax. This does not require separate token kinds for each grammatical use. |
+| D-037 | Decided (initial implementation) | The initial parser uses fail-fast syntax diagnostics: parsing terminates at the first syntax error and returns a structured diagnostic containing its message, source span, and optional expected/actual token metadata. Malformed input must not be accepted as a successfully parsed program. This approach prioritizes correctness, deterministic diagnostics, and simpler parser control flow during M1. Multi-error recovery is deferred rather than rejected permanently; it may be introduced later when statement-boundary synchronization, nested-expression recovery, and diagnostic quality can be tested systematically. |
 
 ## Superseded syntax and semantics
 
@@ -78,7 +80,10 @@ The project began with BakeScript-inspired culinary syntax and then moved to Elo
 
 ## Decisions requiring implementation-time refinement
 
-- Formal lexer token table, escapes, exact precedence/binding powers, and complete parser grammar.
+- Extend lexical coverage as later language features require it; preserve the documented reserved-keyword rules.
+- Implement the established expression precedence and associativity rules, including right-associative exponentiation and its interaction with unary operators.
+- Complete parser grammar, source-span construction, and syntax conformance fixtures.
+- Revisit multi-error syntax recovery only when its implementation is explicitly scheduled.
 - `Int`/`Float` mixed arithmetic, conversions, exceptional floating-point values, and overflow behavior for every operator.
 - Type narrowing, generic type compatibility, and safe mutation analysis.
 - Unicode indexing (code points versus grapheme clusters), collection iteration and mutation rules.

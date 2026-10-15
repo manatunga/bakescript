@@ -1608,6 +1608,10 @@ func TestTokenKindString(t *testing.T) {
 		{TokenSlash, "SLASH"},
 		{TokenFloorDiv, "FLOOR_DIV"},
 		{TokenPercent, "PERCENT"},
+		{TokenChange, "CHANGE"},
+		{TokenTo, "TO"},
+		{TokenWith, "WITH"},
+		{TokenGiving, "GIVING"},
 		{TokenKind(255), "UNKNOWN"},
 	}
 
@@ -2879,28 +2883,28 @@ func TestNextTokenSpans(t *testing.T) {
 		source string
 		spans  []Span
 	}{
-		{"empty input", "", []Span{{Start: Position{1, 1}, End: Position{1, 1}}}},
+		{"empty input", "", []Span{{Start: Position{Line: 1, Column: 1}, End: Position{Line: 1, Column: 1}}}},
 		{"ordinary tokens and EOF", "say 42", []Span{
-			{Start: Position{1, 1}, End: Position{1, 4}},
-			{Start: Position{1, 5}, End: Position{1, 7}},
-			{Start: Position{1, 7}, End: Position{1, 7}},
+			{Start: Position{Line: 1, Column: 1}, End: Position{Line: 1, Column: 4}},
+			{Start: Position{Line: 1, Column: 5}, End: Position{Line: 1, Column: 7}},
+			{Start: Position{Line: 1, Column: 7}, End: Position{Line: 1, Column: 7}},
 		}},
 		{"newline crosses lines", "say\n", []Span{
-			{Start: Position{1, 1}, End: Position{1, 4}},
-			{Start: Position{1, 4}, End: Position{2, 1}},
-			{Start: Position{2, 1}, End: Position{2, 1}},
+			{Start: Position{Line: 1, Column: 1}, End: Position{Line: 1, Column: 4}},
+			{Start: Position{Line: 1, Column: 4}, End: Position{Line: 2, Column: 1}},
+			{Start: Position{Line: 2, Column: 1}, End: Position{Line: 2, Column: 1}},
 		}},
 		{"indent and EOF dedent", "say\n    7", []Span{
-			{Start: Position{1, 1}, End: Position{1, 4}},
-			{Start: Position{1, 4}, End: Position{2, 1}},
-			{Start: Position{2, 5}, End: Position{2, 5}},
-			{Start: Position{2, 5}, End: Position{2, 6}},
-			{Start: Position{2, 6}, End: Position{2, 6}},
-			{Start: Position{2, 6}, End: Position{2, 6}},
+			{Start: Position{Line: 1, Column: 1}, End: Position{Line: 1, Column: 4}},
+			{Start: Position{Line: 1, Column: 4}, End: Position{Line: 2, Column: 1}},
+			{Start: Position{Line: 2, Column: 5}, End: Position{Line: 2, Column: 5}},
+			{Start: Position{Line: 2, Column: 5}, End: Position{Line: 2, Column: 6}},
+			{Start: Position{Line: 2, Column: 6}, End: Position{Line: 2, Column: 6}},
+			{Start: Position{Line: 2, Column: 6}, End: Position{Line: 2, Column: 6}},
 		}},
 		{"quoted string with escape", `"a\nb"`, []Span{
-			{Start: Position{1, 1}, End: Position{1, 7}},
-			{Start: Position{1, 7}, End: Position{1, 7}},
+			{Start: Position{Line: 1, Column: 1}, End: Position{Line: 1, Column: 7}},
+			{Start: Position{Line: 1, Column: 7}, End: Position{Line: 1, Column: 7}},
 		}},
 	}
 	for _, tt := range tests {
@@ -2915,6 +2919,36 @@ func TestNextTokenSpans(t *testing.T) {
 					t.Errorf("token %d (%s): span = %+v, want %+v", i, token.Kind, token.Span, want)
 				}
 
+			}
+		})
+	}
+}
+
+func TestLookupIdentifierConversationalKeywords(t *testing.T) {
+	tests := []struct {
+		word string
+		want TokenKind
+	}{
+		{"change", TokenChange},
+		{"to", TokenTo},
+		{"with", TokenWith},
+		{"giving", TokenGiving},
+		{"Change", TokenIdent},
+		{"changing", TokenIdent},
+		{"together", TokenIdent},
+		{"without", TokenIdent},
+		{"give", TokenIdent},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.word, func(t *testing.T) {
+			if got := lookupIdentifier(tt.word); got != tt.want {
+				t.Errorf(
+					"lookupIdentifier(%q) = %v, want %v",
+					tt.word,
+					got,
+					tt.want,
+				)
 			}
 		})
 	}
