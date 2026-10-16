@@ -1,6 +1,6 @@
 # Eloque Architecture
 
-**Status:** Early implementation — Milestone 1 (Frontend foundations) in progress. The lexer is implemented, tested, and benchmarked for its selected M1 token coverage. The initial AST structures, shared source-location types, parser token-navigation infrastructure, and fail-fast syntax diagnostic representation are implemented and tested. Expression and statement parsing, frontend conformance, the static checker, bytecode compiler, and VM are not yet operational. The working language name, `.elq` extension, and CLI command remain provisional.
+**Status:** Early implementation — Milestone 1 (Frontend foundations) in progress. The lexer is implemented, tested, and benchmarked for its selected M1 token coverage. The initial AST structures, shared source-location types, parser token-navigation infrastructure, and fail-fast syntax diagnostics are implemented and tested. M1-P2 adds Pratt-based arithmetic expression parsing, including literals, identifiers, grouping, unary operators, operator precedence, and associativity, with correctness, robustness, and performance benchmarks. Statement and complete-program parsing, frontend integration, the static checker, bytecode compiler, and VM are not yet operational. The working language name, `.elq` extension, and CLI command remain provisional.
 
 ## Goals and boundaries
 
@@ -87,7 +87,7 @@ A single implementation package may initially handle more than one responsibilit
 
 ## Current frontend implementation
 
-The lexer is the first implemented compilation stage. The M1-P1 checkpoint also establishes the initial AST and parser infrastructure. These components are implemented in Go, but a complete source-to-AST parsing path is not yet operational.
+The lexer, initial AST structures, parser infrastructure, and arithmetic expression parser are implemented in Go. M1-P1 established the shared source-location model, AST foundations, token navigation, and structured syntax diagnostics. M1-P2 extends this foundation with Pratt-based expression parsing. Complete statement and program parsing remain pending, so a full source-to-AST program compilation path is not yet operational.
 
 ### Lexer functionality
 
@@ -142,7 +142,7 @@ Expression and statement interfaces use package-private marker methods to distin
 
 The initial expression nodes are `IntegerLiteral`, `StringLiteral`, `Identifier`, `UnaryExpression`, and `BinaryExpression`. The initial statement nodes are `LetStatement`, `ChangeStatement`, and `SayStatement`.
 
-AST nodes retain their source locations and syntactic relationships without evaluating expressions, resolving names, or performing type checking. Integer literal nodes preserve decimal source text; string literal nodes are designed to hold decoded contents once literal parsing is implemented.
+AST nodes retain their source locations and syntactic relationships without evaluating expressions, resolving names, or performing type checking. Integer literal nodes preserve their decimal source text, while string literal nodes store decoded string contents produced during expression parsing. Unary and binary expression nodes retain their operators, operands, and source spans.
 
 The AST uses interface-based child references. Its structure remains independent of the planned bytecode representation.
 
@@ -159,7 +159,35 @@ The parser also provides a token-expectation helper and a structured `Diagnostic
 
 The initial parser follows a fail-fast contract: the first syntax error terminates parsing, and a malformed program must not be accepted as a successfully parsed AST. Diagnostic accumulation, synchronization, and multi-error recovery are deferred.
 
-The parser does not yet construct expressions or complete programs. Pratt expression parsing, statement parsing, and frontend conformance tests remain M1 work.
+The parser now constructs arithmetic expression ASTs using Pratt parsing. It supports integer and string literals, identifiers, parenthesized expressions, unary numeric plus and minus, and the binary arithmetic operators `+`, `-`, `*`, `/`, `//`, `%`, and `**`. Statement parsing, complete-program parsing, and integrated frontend conformance remain scheduled for subsequent M1 checkpoints.
+
+### Pratt expression parsing (M1-P2)
+
+The expression parser uses Pratt parsing with numeric binding powers to implement Eloque's initial arithmetic grammar. It separates prefix parsing from binary-operator parsing and uses binding-power thresholds to determine how expressions associate.
+
+The currently implemented precedence levels, from highest to lowest, are:
+
+| Precedence | Operators | Associativity |
+|---|---|---|
+| Grouping | `(...)` | Explicit grouping |
+| Exponentiation | `**` | Right-associative |
+| Unary arithmetic | `+`, `-` | Right-nesting prefix operators |
+| Multiplicative | `*`, `/`, `//`, `%` | Left-associative |
+| Additive | `+`, `-` | Left-associative |
+
+Exponentiation binds more tightly than unary arithmetic on its left but accepts unary expressions on its right. Consequently, `-2 ** 2` parses as `-(2 ** 2)`, `2 ** -3` parses as `2 ** (-3)`, and `2 ** 3 ** 2` parses as `2 ** (3 ** 2)`.
+
+The implementation uses binding powers of 50 for additive operators, 60 for multiplicative operators, 70 for prefix unary operators, and 80 for exponentiation. Left-associative operators parse their right operands with a higher minimum binding power, while exponentiation uses its own binding power to preserve right associativity.
+
+Parentheses control grouping without introducing an additional semantic AST node. The parser maintains an internal expression result containing both the AST expression and its complete syntactic source extent. This allows enclosing unary and binary expressions to include grouping parentheses in their spans while preserving the original locations of child AST nodes.
+
+String literal parsing decodes the escape sequences already validated by the lexer. Integer literals retain their original decimal lexemes; numeric interpretation and type checking are not performed during parsing.
+
+The lexer suppresses physical newlines inside matched parentheses, permitting multiline grouped expressions. The expression parser operates on the resulting token stream and treats emitted newline tokens as expression boundaries.
+
+Malformed expressions produce fail-fast syntax diagnostics with source locations and expected/actual token information where applicable. The parser does not currently implement error recovery or multiple diagnostics per parse.
+
+The implemented expression subset excludes comparisons, Boolean operators, function calls, member access, and collection expressions. These remain part of the target language specification and will be introduced according to their scheduled implementation milestones.
 
 ### Complexity and measured lexer performance
 
@@ -179,6 +207,29 @@ Benchmarks were performed on linux/amd64 with an Intel Core Ultra 7 155H process
 A separate scaling benchmark, using repeated source samples from 138 bytes to 138 KB, showed approximately linear execution time and constant allocation counts for the tested bounded-indentation workload.
 
 These measurements characterize the lexer baseline before the latest keyword additions, not the performance of the future parser, compiler, or virtual machine. Benchmarks are maintained in `internal/lexer/lexer_bench_test.go`.
+
+### Expression parser complexity and performance (M1-P2)
+
+The Pratt expression parser consumes tokens without backtracking and has expected O(n) parsing time for an expression containing n tokens. AST memory grows proportionally to the number of expression nodes. Recursive parsing introduces additional stack usage proportional to expression nesting depth.
+
+The initial M1-P2 benchmark suite measures parsing and AST construction from prepared token streams, excluding lexing and token generation. Five benchmark runs were collected on linux/amd64 using an Intel Core Ultra 7 155H processor.
+
+| Benchmark | Input size | Median time | Memory per parse | Allocations per parse |
+|---|---:|---:|---:|---:|
+| Simple arithmetic | 2 operators | ~287 ns | 496 B | 8 |
+| Mixed precedence | 3 operators | ~394 ns | 688 B | 11 |
+| Additive chain | 100 operators | ~12.42 µs | 19,314 B | 302 |
+| Additive chain | 1,000 operators | ~115.63 µs | ~192 KB | 3,002 |
+| Exponentiation chain | 100 operators | ~13.11 µs | 19,314 B | 302 |
+| Exponentiation chain | 1,000 operators | ~135.02 µs | ~192 KB | 3,002 |
+| Nested parentheses | 100 levels | ~14.38 µs | 12,913 B | 202 |
+| Nested parentheses | 1,000 levels | ~160.87 µs | ~128 KB | 2,002 |
+
+The tested workloads demonstrate approximately linear execution-time and allocation scaling. Stress tests with 1,000 nested parentheses and 1,000 exponentiation operators also pass.
+
+No production-code optimisation was justified by the initial measurements. Recursive nesting remains a potential robustness concern for unusually deep or adversarial inputs; no universal nesting limit has been established.
+
+Benchmarks are maintained in `internal/parser/expression_bench_test.go`. These results establish an expression-parser baseline rather than full frontend or compiler throughput.
 
 ## Runtime value model
 

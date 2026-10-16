@@ -106,9 +106,9 @@ At each milestone, inspect items whose triggers have arrived. Record the decisio
 - **Status:** Initial grammar design resolved; parser implementation pending.
 - **Baseline:** Function calls use `name with (...)`, including zero-argument calls. Function definitions use `to name with (...) giving Type:` where a return type is declared. Multiword operators are recognized according to the documented grammar.
 - **Decision:** The initial expression grammar uses Pratt parsing. Exponentiation is right-associative and binds more tightly than unary negation on its left, while accepting unary expressions on its right. Multiplicative and additive operators are left-associative. Chained comparisons are excluded from the initial grammar.
-- **Evidence:** Expression precedence, associativity, and call syntax are documented in `LANGUAGE_SPEC.md`. The lexer provides the necessary initial arithmetic tokens and reserved grammatical words. Parser expression and call implementations are not yet complete.
-- **Next action:** Implement and test the documented expression grammar in M1-P2. Implement function-call parsing when its scheduled language subset is introduced; do not treat a settled syntax decision as a requirement to implement all call features in M1.
-- **Next review trigger:** Expression parser conformance in M1-P2, followed by function-call implementation in M4.
+- **Evidence:** The M1-P2 Pratt expression parser implements integer and string literals, identifiers, grouping, unary numeric operators, and binary arithmetic operators. Tests cover precedence, left- and right-associativity, exponentiation's interaction with unary operators, source spans, malformed expressions, and expression boundaries. Stress tests with 1,000 nested parentheses and 1,000 exponentiation operators pass. Function-call parsing and conversational comparison operators are not yet implemented.
+- **Next action:** Retain the implemented arithmetic grammar as the baseline. Extend expression parsing when comparison, Boolean, call, and member-access syntax enters its scheduled milestone. Implement function calls according to the established `name with (...)` grammar rather than introducing alternative syntax.
+- **Next review trigger:** M3 for comparison and Boolean expression parsing; M4 for function-call parsing.
 - **Criterion:** Deterministic, unambiguous parsing with precise source locations and diagnostics.
 - **Note:** The historical `call ... with ...` and bare built-in invocation alternatives remain superseded.
 
@@ -185,8 +185,8 @@ At each milestone, inspect items whose triggers have arrived. Record the decisio
 - **Method:** Define stable error codes, severity, file/line/column/spans, related locations and optional suggested fixes.
 - **Criterion:** Diagnostics are actionable, deterministic and easy to parse without requiring prose interpretation.
 - **Evidence:** Pending.
-- **M1 progress:** Tokens carry half-open source spans, and AST nodes expose source spans through a shared source-location model. Lexical errors report source positions. The parser infrastructure defines structured syntax diagnostics with messages, source spans, optional expected token kinds, and optional actual token kinds. Initial lexical and syntax error handling is fail-fast.
-- **Next action:** Verify precise AST span construction and syntax-error locations during M1-P2 through M1-P5. Introduce checker diagnostics alongside semantic analysis in M2. Defer multi-error recovery and finalize the broader machine-readable diagnostic schema before M8 tooling.
+- **M1 progress:** Tokens and AST nodes use shared half-open source spans. The M1-P2 expression parser preserves semantic node locations separately from complete syntactic grouping extents, allowing enclosing expressions to retain accurate spans. Expression tests cover source-span construction, malformed input, expected and actual token metadata, and fail-fast syntax diagnostics. The parser reports the first encountered syntax error without attempting recovery.
+- **Next action:** Extend source-span and diagnostic validation to statement and complete-program parsing during M1-P3 through M1-P5. Introduce checker diagnostics alongside semantic analysis in M2. Defer multi-error recovery and finalize the broader machine-readable diagnostic schema before M8 tooling.
 
 ### TB-020 — Sandboxed execution budgets
 - **Status:** Committed long-term capability; design review required.
@@ -204,13 +204,23 @@ At each milestone, inspect items whose triggers have arrived. Record the decisio
 - **Criterion:** Preserve predictable mutation while enabling useful concurrent programs.
 - **Evidence:** Pending.
 
+## M1-P2 expression parser performance review
+
+- **Date / milestone:** October 2026 — M1-P2.
+- **Decision:** Retain the current Pratt parser implementation without production-code optimisation.
+- **Evidence:** Five-run benchmarks measured arithmetic expressions, mixed precedence, additive chains, exponentiation chains, and nested parentheses using prepared token streams. At 1,000 operators, median parsing times were approximately 115.63 µs for additive chains and 135.02 µs for exponentiation chains. At 1,000 grouping levels, median parsing time was approximately 160.87 µs. Execution time and allocations scaled approximately linearly across the tested sizes. Stress tests at depth 1,000 passed.
+- **Reasoning:** No pathological scaling or demonstrated performance bottleneck justifies additional implementation complexity at this checkpoint.
+- **Next action:** Preserve the benchmark suite and compare results after substantial parser changes. Investigate recursive parsing depth only if robustness requirements or measurements establish a need.
+- **Next review trigger:** Completion of M1-P5 frontend integration, a measured performance regression, or a demonstrated excessive-nesting failure.
+
 ## Milestone review checklist
 
 - [x] **M1 lexer performance:** TB-022 token representation, allocation efficiency, and scaling review.
 - [x] **M1:** Begin TB-019 source spans through lexer tokens.
 - [x] **M1-P1:** Review TB-010 conversational grammar, exponentiation, and Pratt precedence before expression parsing.
 - [x] **M1-P1:** Establish shared AST source spans and the initial structured parser diagnostic contract under TB-019.
-- [ ] **M1-P2–P5:** Verify parser span accuracy, syntax diagnostics, and frontend conformance.
+- [x] **M1-P2:** Verify arithmetic expression precedence, associativity, source spans, syntax diagnostics, robustness, and initial performance scaling.
+- [ ] **M1-P3–P5:** Extend parser span accuracy, syntax diagnostics, and frontend conformance to statements, complete programs, and lexer–parser integration.
 - [ ] **M2:** Extend TB-019 diagnostics to name resolution and static type checking.
 - [ ] **Before M2:** TB-008 values, TB-012 checker, TB-013 numeric behavior, TB-011 scope.
 - [ ] **After working M2:** TB-001 stack/register review; TB-007 benchmark baseline.

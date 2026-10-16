@@ -1,0 +1,61 @@
+goos: linux
+goarch: amd64
+pkg: github.com/manatunga/eloque/internal/parser
+cpu: Intel(R) Core(TM) Ultra 7 155H
+BenchmarkParseSimpleArithmetic-22       	 3916719	       307.3 ns/op	     496 B/op	       8 allocs/op
+BenchmarkParseSimpleArithmetic-22       	 4099632	       287.3 ns/op	     496 B/op	       8 allocs/op
+BenchmarkParseSimpleArithmetic-22       	 4105963	       296.9 ns/op	     496 B/op	       8 allocs/op
+BenchmarkParseSimpleArithmetic-22       	 4302579	       277.9 ns/op	     496 B/op	       8 allocs/op
+BenchmarkParseSimpleArithmetic-22       	 4271680	       283.3 ns/op	     496 B/op	       8 allocs/op
+BenchmarkParseMixedPrecedence-22        	 3124564	       393.2 ns/op	     688 B/op	      11 allocs/op
+BenchmarkParseMixedPrecedence-22        	 3110214	       393.5 ns/op	     688 B/op	      11 allocs/op
+BenchmarkParseMixedPrecedence-22        	 3028203	       394.2 ns/op	     688 B/op	      11 allocs/op
+BenchmarkParseMixedPrecedence-22        	 2934888	       399.6 ns/op	     688 B/op	      11 allocs/op
+BenchmarkParseMixedPrecedence-22        	 2981403	       402.6 ns/op	     688 B/op	      11 allocs/op
+BenchmarkParseAdditiveChain/Operators10-22         	 1000000	      1328 ns/op	    2032 B/op	      32 allocs/op
+BenchmarkParseAdditiveChain/Operators10-22         	  853940	      1414 ns/op	    2032 B/op	      32 allocs/op
+BenchmarkParseAdditiveChain/Operators10-22         	  806463	      1372 ns/op	    2032 B/op	      32 allocs/op
+BenchmarkParseAdditiveChain/Operators10-22         	  971372	      1271 ns/op	    2032 B/op	      32 allocs/op
+BenchmarkParseAdditiveChain/Operators10-22         	  955780	      1224 ns/op	    2032 B/op	      32 allocs/op
+BenchmarkParseAdditiveChain/Operators100-22        	   89412	     12548 ns/op	   19314 B/op	     302 allocs/op
+BenchmarkParseAdditiveChain/Operators100-22        	   92301	     12418 ns/op	   19314 B/op	     302 allocs/op
+BenchmarkParseAdditiveChain/Operators100-22        	   97818	     11338 ns/op	   19314 B/op	     302 allocs/op
+BenchmarkParseAdditiveChain/Operators100-22        	  106647	     11823 ns/op	   19314 B/op	     302 allocs/op
+BenchmarkParseAdditiveChain/Operators100-22        	  105351	     12618 ns/op	   19314 B/op	     302 allocs/op
+BenchmarkParseAdditiveChain/Operators1000-22       	   10000	    121692 ns/op	  192133 B/op	    3002 allocs/op
+BenchmarkParseAdditiveChain/Operators1000-22       	   10375	    114469 ns/op	  192134 B/op	    3002 allocs/op
+BenchmarkParseAdditiveChain/Operators1000-22       	   10000	    115632 ns/op	  192135 B/op	    3002 allocs/op
+BenchmarkParseAdditiveChain/Operators1000-22       	   10000	    112798 ns/op	  192136 B/op	    3002 allocs/op
+BenchmarkParseAdditiveChain/Operators1000-22       	   10000	    118079 ns/op	  192133 B/op	    3002 allocs/op
+BenchmarkParseExponentiationChain/Operators10-22   	  919005	      1258 ns/op	    2032 B/op	      32 allocs/op
+BenchmarkParseExponentiationChain/Operators10-22   	  953667	      1459 ns/op	    2032 B/op	      32 allocs/op
+BenchmarkParseExponentiationChain/Operators10-22   	 1000000	      1221 ns/op	    2032 B/op	      32 allocs/op
+BenchmarkParseExponentiationChain/Operators10-22   	 1000000	      1201 ns/op	    2032 B/op	      32 allocs/op
+BenchmarkParseExponentiationChain/Operators10-22   	  982180	      1217 ns/op	    2032 B/op	      32 allocs/op
+BenchmarkParseExponentiationChain/Operators100-22  	   95959	     13800 ns/op	   19314 B/op	     302 allocs/op
+BenchmarkParseExponentiationChain/Operators100-22  	   92431	     13114 ns/op	   19314 B/op	     302 allocs/op
+BenchmarkParseExponentiationChain/Operators100-22  	   78764	     14377 ns/op	   19314 B/op	     302 allocs/op
+BenchmarkParseExponentiationChain/Operators100-22  	   89955	     12918 ns/op	   19314 B/op	     302 allocs/op
+BenchmarkParseExponentiationChain/Operators100-22  	   99576	     13042 ns/op	   19314 B/op	     302 allocs/op
+BenchmarkParseExponentiationChain/Operators1000-22 	    8289	    132769 ns/op	  192129 B/op	    3002 allocs/op
+BenchmarkParseExponentiationChain/Operators1000-22 	    9184	    127751 ns/op	  192128 B/op	    3002 allocs/op
+BenchmarkParseExponentiationChain/Operators1000-22 	    9496	    135727 ns/op	  192123 B/op	    3002 allocs/op
+BenchmarkParseExponentiationChain/Operators1000-22 	    9408	    135015 ns/op	  192124 B/op	    3002 allocs/op
+BenchmarkParseExponentiationChain/Operators1000-22 	    8001	    143964 ns/op	  192121 B/op	    3002 allocs/op
+BenchmarkParseNestedParentheses/Depth10-22         	  800150	      1331 ns/op	    1392 B/op	      22 allocs/op
+BenchmarkParseNestedParentheses/Depth10-22         	  958892	      1341 ns/op	    1392 B/op	      22 allocs/op
+BenchmarkParseNestedParentheses/Depth10-22         	  710828	      1487 ns/op	    1392 B/op	      22 allocs/op
+BenchmarkParseNestedParentheses/Depth10-22         	  810544	      1398 ns/op	    1392 B/op	      22 allocs/op
+BenchmarkParseNestedParentheses/Depth10-22         	  853411	      1322 ns/op	    1392 B/op	      22 allocs/op
+BenchmarkParseNestedParentheses/Depth100-22        	   79111	     14903 ns/op	   12913 B/op	     202 allocs/op
+BenchmarkParseNestedParentheses/Depth100-22        	   81594	     14381 ns/op	   12913 B/op	     202 allocs/op
+BenchmarkParseNestedParentheses/Depth100-22        	   72454	     15474 ns/op	   12913 B/op	     202 allocs/op
+BenchmarkParseNestedParentheses/Depth100-22        	   84458	     13790 ns/op	   12913 B/op	     202 allocs/op
+BenchmarkParseNestedParentheses/Depth100-22        	   83170	     14130 ns/op	   12913 B/op	     202 allocs/op
+BenchmarkParseNestedParentheses/Depth1000-22       	    7045	    176918 ns/op	  128116 B/op	    2002 allocs/op
+BenchmarkParseNestedParentheses/Depth1000-22       	    7267	    160874 ns/op	  128115 B/op	    2002 allocs/op
+BenchmarkParseNestedParentheses/Depth1000-22       	    8528	    155106 ns/op	  128115 B/op	    2002 allocs/op
+BenchmarkParseNestedParentheses/Depth1000-22       	    7792	    154212 ns/op	  128115 B/op	    2002 allocs/op
+BenchmarkParseNestedParentheses/Depth1000-22       	    8037	    162949 ns/op	  128115 B/op	    2002 allocs/op
+PASS
+ok  	github.com/manatunga/eloque/internal/parser	65.980s

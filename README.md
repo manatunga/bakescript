@@ -2,11 +2,11 @@
   <img src=".github/branding/readme-banner.png" alt="Eloque Programming Language Banner" width="100%">
 </p>
 
-# Eloque
+# The Eloque Programming Language
 
 **Eloque** is a proposed general-purpose programming language with structured, conversational-English-inspired syntax and precise, statically checked semantics. It is intended to be approachable for beginners while providing predictable diagnostics and tooling for AI-assisted development.
 
-> **Status:** Early development — Milestone 1 (Lexer) in progress. Eloque is a working name, and the `.elq` extension and `eloque` CLI name remain provisional. Initial token scanning and lexical diagnostics are implemented and tested, but the language is not yet executable. The examples below are **illustrative, not executable**.
+> **Status:** Early development — Milestone 1 (Frontend foundations) in progress. The lexer, initial AST structures, parser infrastructure, and arithmetic expression parser are implemented and tested. Expression parsing supports literals, identifiers, grouping, unary arithmetic, and binary arithmetic precedence and associativity. Statement and complete-program parsing are not yet operational, and Eloque cannot execute source programs. The working name, `.elq` extension, and CLI name remain provisional. The examples below are **illustrative, not executable**.
 
 ## A glimpse of Eloque
 
@@ -77,4 +77,6 @@ No installation instructions are provided yet because there is no working Eloque
 
 ## Project status
 
-This repository currently documents a proposed language and its implementation plan. Syntax, release boundaries and technical details may evolve before version 1.0. Contributions and examples should distinguish **designed behavior** from **implemented behavior**.
+Eloque is in active frontend development. The lexer and foundational AST/parser infrastructure are implemented, and the initial Pratt arithmetic expression parser has passed correctness, robustness, and performance validation. Complete-program parsing, mandatory static type checking, bytecode compilation, and virtual-machine execution remain future work.
+
+The language specification describes the intended language, not the currently executable feature set. Syntax, release boundaries, and technical details may evolve before version 1.0.
