@@ -6,7 +6,7 @@
 
 **Eloque** is a proposed general-purpose programming language with structured, conversational-English-inspired syntax and precise, statically checked semantics. It is intended to be approachable for beginners while providing predictable diagnostics and tooling for AI-assisted development.
 
-> **Status:** Early development — Milestone 1 (Frontend foundations) in progress. The lexer, initial AST structures, parser infrastructure, and arithmetic expression parser are implemented and tested. Expression parsing supports literals, identifiers, grouping, unary arithmetic, and binary arithmetic precedence and associativity. Statement and complete-program parsing are not yet operational, and Eloque cannot execute source programs. The working name, `.elq` extension, and CLI name remain provisional. The examples below are **illustrative, not executable**.
+> **Status:** Early development — Milestone 1 (Frontend foundations) in progress. The lexer, initial AST structures, parser infrastructure, Pratt arithmetic expression parser, and initial statement and program parsers are implemented and tested. The parser supports `let` declarations, `change` assignments, and `say` statements containing the currently supported arithmetic expressions, identifiers, and literals. It constructs complete program ASTs from prepared token streams, with source spans and fail-fast syntax diagnostics. Lexer–parser integration and full frontend conformance remain pending. Eloque cannot yet execute source programs. The working name, `.elq` extension, and CLI name remain provisional. The examples below are **illustrative, not executable**.
 
 ## A glimpse of Eloque
 
@@ -77,6 +77,14 @@ No installation instructions are provided yet because there is no working Eloque
 
 ## Project status
 
-Eloque is in active frontend development. The lexer and foundational AST/parser infrastructure are implemented, and the initial Pratt arithmetic expression parser has passed correctness, robustness, and performance validation. Complete-program parsing, mandatory static type checking, bytecode compilation, and virtual-machine execution remain future work.
+Eloque is in active frontend development under Milestone 1.
+
+The lexer and foundational AST/parser infrastructure are implemented and tested. The Pratt expression parser supports integer and string literals, identifiers, grouping, unary arithmetic, and binary arithmetic with the documented precedence and associativity rules.
+
+The initial statement parser supports `let`, `change`, and `say`. Complete-program parsing supports newline-separated statements, blank lines, and EOF termination. Parsed statements and programs retain source spans, while malformed syntax produces structured, fail-fast diagnostics.
+
+Expression and program parsing have undergone correctness, robustness, and performance testing. Initial program-parsing benchmarks demonstrate approximately linear scaling across workloads containing 3, 300, and 3,000 statements. These benchmarks measure parsing from prepared tokens, excluding lexing.
+
+The M1-P3 implementation has been completed after a final checkpoint review. Lexer–parser integration, broader frontend conformance, mandatory static type checking, bytecode compilation, and virtual-machine execution remain future work.
 
 The language specification describes the intended language, not the currently executable feature set. Syntax, release boundaries, and technical details may evolve before version 1.0.

@@ -185,8 +185,8 @@ At each milestone, inspect items whose triggers have arrived. Record the decisio
 - **Method:** Define stable error codes, severity, file/line/column/spans, related locations and optional suggested fixes.
 - **Criterion:** Diagnostics are actionable, deterministic and easy to parse without requiring prose interpretation.
 - **Evidence:** Pending.
-- **M1 progress:** Tokens and AST nodes use shared half-open source spans. The M1-P2 expression parser preserves semantic node locations separately from complete syntactic grouping extents, allowing enclosing expressions to retain accurate spans. Expression tests cover source-span construction, malformed input, expected and actual token metadata, and fail-fast syntax diagnostics. The parser reports the first encountered syntax error without attempting recovery.
-- **Next action:** Extend source-span and diagnostic validation to statement and complete-program parsing during M1-P3 through M1-P5. Introduce checker diagnostics alongside semantic analysis in M2. Defer multi-error recovery and finalize the broader machine-readable diagnostic schema before M8 tooling.
+- **M1 progress:** Tokens and AST nodes use shared half-open source spans. M1-P2 established expression source-location tracking, including the distinction between semantic AST node locations and complete syntactic grouping extents. M1-P3 extends source-span preservation and structured fail-fast diagnostics to `let`, `change`, and `say` statements and complete-program parsing. Tests verify statement and program spans, missing required syntax, unsupported statement starters, missing statement separators, expected/actual token metadata, nested expression diagnostic propagation, and errors occurring after previously valid statements. Malformed programs do not produce successful partial program ASTs.
+- **Next action:** Complete broader syntax diagnostics and conformance coverage in M1-P4, followed by lexer–parser integration and frontend validation in M1-P5. Introduce checker diagnostics alongside semantic analysis in M2. Multi-error recovery remains deferred, and the broader machine-readable diagnostic schema should be finalised before M8 tooling.
 
 ### TB-020 — Sandboxed execution budgets
 - **Status:** Committed long-term capability; design review required.
@@ -213,6 +213,15 @@ At each milestone, inspect items whose triggers have arrived. Record the decisio
 - **Next action:** Preserve the benchmark suite and compare results after substantial parser changes. Investigate recursive parsing depth only if robustness requirements or measurements establish a need.
 - **Next review trigger:** Completion of M1-P5 frontend integration, a measured performance regression, or a demonstrated excessive-nesting failure.
 
+## M1-P3 statement and program parser performance review
+
+- **Date / milestone:** October 2026 — M1-P3.
+- **Decision:** Retain the current statement and program parser implementation without production-code optimisation.
+- **Evidence:** Five-run benchmarks measured complete-program parsing from prepared token streams containing 3, 300, and 3,000 statements, cycling through `let`, `change`, and `say`. Mean execution times were approximately 864.5 ns, 86.5 µs, and 1.007 ms respectively. Memory usage was approximately 1,712 B, 162,994 B, and 1,694,141 B per parse, with 29, 2,510, and 25,015 allocations per parse. Execution time, memory consumption, and allocation counts scaled approximately linearly across the tested workloads. Statement/program correctness and diagnostic tests passed.
+- **Reasoning:** The implementation advances through tokens without backtracking, delegates expressions to the existing Pratt parser, and exhibits no demonstrated pathological scaling or bottleneck that would justify additional complexity.
+- **Next action:** Retain `internal/parser/program_bench_test.go` and the saved `benchmark_m1_p3.txt` results as a performance baseline. Reassess after frontend integration or substantial grammar changes.
+- **Next review trigger:** M1-P5 frontend integration, a measured performance regression, or a demonstrated robustness issue.
+
 ## Milestone review checklist
 
 - [x] **M1 lexer performance:** TB-022 token representation, allocation efficiency, and scaling review.
@@ -220,7 +229,9 @@ At each milestone, inspect items whose triggers have arrived. Record the decisio
 - [x] **M1-P1:** Review TB-010 conversational grammar, exponentiation, and Pratt precedence before expression parsing.
 - [x] **M1-P1:** Establish shared AST source spans and the initial structured parser diagnostic contract under TB-019.
 - [x] **M1-P2:** Verify arithmetic expression precedence, associativity, source spans, syntax diagnostics, robustness, and initial performance scaling.
-- [ ] **M1-P3–P5:** Extend parser span accuracy, syntax diagnostics, and frontend conformance to statements, complete programs, and lexer–parser integration.
+- [x] **M1-P3:** Verify statement and complete-program source spans, structured syntax diagnostics, nested expression diagnostic propagation, and program-parsing performance.
+- [ ] **M1-P4:** Complete broader syntax diagnostics and positive/negative frontend conformance fixtures.
+- [ ] **M1-P5:** Complete lexer–parser integration, end-to-end frontend validation, and performance regression review.
 - [ ] **M2:** Extend TB-019 diagnostics to name resolution and static type checking.
 - [ ] **Before M2:** TB-008 values, TB-012 checker, TB-013 numeric behavior, TB-011 scope.
 - [ ] **After working M2:** TB-001 stack/register review; TB-007 benchmark baseline.

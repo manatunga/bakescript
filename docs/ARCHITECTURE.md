@@ -1,6 +1,6 @@
 # Eloque Architecture
 
-**Status:** Early implementation — Milestone 1 (Frontend foundations) in progress. The lexer is implemented, tested, and benchmarked for its selected M1 token coverage. The initial AST structures, shared source-location types, parser token-navigation infrastructure, and fail-fast syntax diagnostics are implemented and tested. M1-P2 adds Pratt-based arithmetic expression parsing, including literals, identifiers, grouping, unary operators, operator precedence, and associativity, with correctness, robustness, and performance benchmarks. Statement and complete-program parsing, frontend integration, the static checker, bytecode compiler, and VM are not yet operational. The working language name, `.elq` extension, and CLI command remain provisional.
+**Status:** Early implementation — Milestone 1 (Frontend foundations) in progress. The lexer, initial AST structures, shared source-location types, parser infrastructure, and Pratt arithmetic expression parser are implemented and tested. M1-P3 adds parsing for `let`, `change`, and `say` statements and complete programs constructed from prepared token streams, including statement boundaries, source spans, and structured fail-fast diagnostics. Initial expression and program parsing benchmarks demonstrate approximately linear scaling. Lexer–parser integration, broader frontend conformance, the static checker, bytecode compiler, and VM remain pending. The working language name, `.elq` extension, and CLI command remain provisional.
 
 ## Goals and boundaries
 
@@ -62,7 +62,7 @@ A single implementation package may initially handle more than one responsibilit
 
 - Four spaces per indentation level; tabs prohibited. Blank/comment-only lines do not change indentation.
 - A colon introduces an indented block; newlines ordinarily terminate statements.
-- Parentheses, brackets and braces permit implicit line continuation.
+- The current lexer supports implicit line continuation inside matched parentheses. Continuation inside brackets and braces is part of the target language design and will be implemented alongside their respective collection syntax.
 - Keywords and conversational operator phrases have precise grammar; this is **not** natural-language parsing.
 - Prefer tokenizing individual words and recognizing multiword constructs in the parser.
 - Preserve source spans on tokens and AST nodes for precise diagnostics.
@@ -87,7 +87,11 @@ A single implementation package may initially handle more than one responsibilit
 
 ## Current frontend implementation
 
-The lexer, initial AST structures, parser infrastructure, and arithmetic expression parser are implemented in Go. M1-P1 established the shared source-location model, AST foundations, token navigation, and structured syntax diagnostics. M1-P2 extends this foundation with Pratt-based expression parsing. Complete statement and program parsing remain pending, so a full source-to-AST program compilation path is not yet operational.
+The lexer, foundational AST structures, parser infrastructure, arithmetic expression parser, and initial statement/program parser are implemented in Go.
+
+M1-P1 established the shared source-location model, AST foundations, token navigation, and structured syntax diagnostics. M1-P2 introduced Pratt-based arithmetic expression parsing, including precedence, associativity, grouping, and source-extent tracking. M1-P3 extends the parser to support `let`, `change`, and `say` statements and complete programs.
+
+The parser currently operates on prepared token streams. Lexer–parser integration and broader frontend conformance remain scheduled for M1-P5. Eloque cannot yet compile or execute source programs.
 
 ### Lexer functionality
 
@@ -159,7 +163,11 @@ The parser also provides a token-expectation helper and a structured `Diagnostic
 
 The initial parser follows a fail-fast contract: the first syntax error terminates parsing, and a malformed program must not be accepted as a successfully parsed AST. Diagnostic accumulation, synchronization, and multi-error recovery are deferred.
 
-The parser now constructs arithmetic expression ASTs using Pratt parsing. It supports integer and string literals, identifiers, parenthesized expressions, unary numeric plus and minus, and the binary arithmetic operators `+`, `-`, `*`, `/`, `//`, `%`, and `**`. Statement parsing, complete-program parsing, and integrated frontend conformance remain scheduled for subsequent M1 checkpoints.
+The parser constructs arithmetic expression ASTs using Pratt parsing. It supports integer and string literals, identifiers, parenthesized expressions, unary numeric plus and minus, and the binary arithmetic operators `+`, `-`, `*`, `/`, `//`, `%`, and `**`.
+
+M1-P3 extends this infrastructure with statement-specific parsers, statement dispatch, and complete-program parsing. Each statement delegates its value expression to the existing Pratt parser. The program parser handles newline-separated statements, blank lines, and EOF termination, enforcing statement boundaries and preserving source spans.
+
+Lexer–parser integration and broader frontend conformance remain scheduled for subsequent M1 checkpoints.
 
 ### Pratt expression parsing (M1-P2)
 
@@ -188,6 +196,102 @@ The lexer suppresses physical newlines inside matched parentheses, permitting mu
 Malformed expressions produce fail-fast syntax diagnostics with source locations and expected/actual token information where applicable. The parser does not currently implement error recovery or multiple diagnostics per parse.
 
 The implemented expression subset excludes comparisons, Boolean operators, function calls, member access, and collection expressions. These remain part of the target language specification and will be introduced according to their scheduled implementation milestones.
+
+### Statement and program parsing (M1-P3)
+
+M1-P3 introduces the initial statement grammar and complete-program AST construction using the existing parser infrastructure.
+
+The supported statement forms are:
+
+```elq
+let value be 10 + 20
+change value to value * 2
+say value
+```
+
+These examples describe syntax accepted by the statement parser when supplied with the corresponding tokens. They are not yet executable Eloque programs.
+
+**Statement parsing**
+
+The parser implements three statement-specific methods:
+
+- `parseLetStatement()` parses `let identifier be expression` and constructs an `ast.LetStatement`.
+- `parseChangeStatement()` parses `change identifier to expression` and constructs an `ast.ChangeStatement`.
+- `parseSayStatement()` parses `say expression` and constructs an `ast.SayStatement`.
+
+`parseStatement()` dispatches according to the current token kind. Unsupported statement starters produce structured diagnostics identifying the expected statement keywords and actual token kind.
+
+Each statement parser delegates expression parsing to `parseExpression(0)`. Expression parsing remains independent of statement-specific syntax.
+
+Statement source spans begin at their initiating keyword and end at the complete syntactic extent of their value expression. This includes enclosing grouping parentheses where applicable.
+
+**Complete-program parsing**
+
+`parseProgram()` constructs an `ast.Program` containing an ordered slice of statements.
+
+The program parser:
+
+- Processes statements in source order.
+- Skips newline tokens between statements, including blank lines.
+- Requires a newline or EOF after each successfully parsed statement.
+- Stops at EOF.
+- Returns a diagnostic rather than a partial successful program when parsing fails.
+
+A nonempty program's source span begins at its first statement and ends at its last statement. For an empty program, the span is zero-width at the EOF position.
+
+The current implementation does not parse indentation-based blocks or additional statement forms. These will be introduced as their respective language features are implemented.
+
+**Diagnostics and failure handling**
+
+M1-P3 preserves the existing fail-fast diagnostic contract.
+
+Malformed statement syntax, missing required keywords or identifiers, invalid statement starters, missing statement separators, and nested expression failures produce structured diagnostics.
+
+Diagnostics retain the relevant source location and expected/actual token metadata where applicable. Expression diagnostics propagate through statement and program parsing without being replaced by generic errors.
+
+The parser returns no successful program AST when a syntax error is encountered. Multi-error recovery and synchronization remain deferred.
+
+**Architecture and complexity**
+
+The parsing flow is:
+
+```text
+parseProgram()
+    |
+    v
+parseStatement()
+    |
+    +-- parseLetStatement()
+    |
+    +-- parseChangeStatement()
+    |
+    +-- parseSayStatement()
+                |
+                v
+         parseExpression(0)
+```
+
+All three statement-specific parsers delegate value expressions to `parseExpression(0)`; the diagram illustrates the shared dependency rather than exclusive use by `parseSayStatement()`.
+
+Statement dispatch uses token-kind matching, and program parsing advances through the token stream without backtracking. Expected parsing time is O(n) for n tokens, excluding pathological recursive-expression stack considerations.
+
+AST memory and allocations grow proportionally to the size of the parsed program under the tested workloads.
+
+**Performance baseline**
+
+The initial M1-P3 benchmark suite measures complete-program parsing and AST construction from prepared token streams, excluding lexing and token generation.
+
+Five runs per workload were collected on linux/amd64 using an Intel Core Ultra 7 155H processor.
+
+| Statements | Mean parsing time | Approximate memory per parse | Allocations per parse |
+|---|---:|---:|---:|
+| 3 | 864.5 ns | 1,712 B | 29 |
+| 300 | 86.5 µs | 162,994 B | 2,510 |
+| 3,000 | 1.007 ms | 1,694,141 B | 25,015 |
+
+The results demonstrate approximately linear scaling in execution time, memory consumption, and allocations across the tested workloads. No production-code optimisation was justified at this checkpoint.
+
+Benchmarks are maintained in `internal/parser/program_bench_test.go`, with raw results preserved in `benchmark_m1_p3.txt`. The measurements establish a program-parser baseline, not end-to-end frontend or compiler throughput.
 
 ### Complexity and measured lexer performance
 

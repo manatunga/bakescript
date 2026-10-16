@@ -1,0 +1,21 @@
+goos: linux
+goarch: amd64
+pkg: github.com/manatunga/eloque/internal/parser
+cpu: Intel(R) Core(TM) Ultra 7 155H
+BenchmarkParseProgram/3Statements-22         	 1476195	       833.6 ns/op	    1712 B/op	      29 allocs/op
+BenchmarkParseProgram/3Statements-22         	 1354636	       843.7 ns/op	    1712 B/op	      29 allocs/op
+BenchmarkParseProgram/3Statements-22         	 1432705	       846.5 ns/op	    1712 B/op	      29 allocs/op
+BenchmarkParseProgram/3Statements-22         	 1493238	       857.5 ns/op	    1712 B/op	      29 allocs/op
+BenchmarkParseProgram/3Statements-22         	 1356165	       881.0 ns/op	    1712 B/op	      29 allocs/op
+BenchmarkParseProgram/300Statements-22       	   13484	     89079 ns/op	  162994 B/op	    2510 allocs/op
+BenchmarkParseProgram/300Statements-22       	   13344	     89453 ns/op	  162993 B/op	    2510 allocs/op
+BenchmarkParseProgram/300Statements-22       	   13750	     89972 ns/op	  162993 B/op	    2510 allocs/op
+BenchmarkParseProgram/300Statements-22       	   13800	     92074 ns/op	  162994 B/op	    2510 allocs/op
+BenchmarkParseProgram/300Statements-22       	   13438	     86323 ns/op	  162994 B/op	    2510 allocs/op
+BenchmarkParseProgram/3000Statements-22      	    1251	    990206 ns/op	 1694141 B/op	   25015 allocs/op
+BenchmarkParseProgram/3000Statements-22      	    1184	   1009204 ns/op	 1694141 B/op	   25015 allocs/op
+BenchmarkParseProgram/3000Statements-22      	    1148	   1035814 ns/op	 1694143 B/op	   25015 allocs/op
+BenchmarkParseProgram/3000Statements-22      	    1152	   1000493 ns/op	 1694143 B/op	   25015 allocs/op
+BenchmarkParseProgram/3000Statements-22      	    1042	   1066080 ns/op	 1694139 B/op	   25015 allocs/op
+PASS
+ok  	github.com/manatunga/eloque/internal/parser	27.323s

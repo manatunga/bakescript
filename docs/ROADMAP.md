@@ -59,7 +59,7 @@ The order may change where dependencies demand it. In particular, implement enou
 - Established fail-fast syntax-error handling; multi-error recovery remains deferred.
 - Added dedicated lexer token kinds for `change`, `to`, `with`, and `giving`.
 
-**M1-P2 — Pratt expression parsing: Implemented**
+**M1-P2 — Pratt expression parsing: Completed**
 
 - Implemented Pratt parsing for integer literals, string literals, identifiers, and parenthesized expressions.
 - Implemented unary numeric plus and minus and binary arithmetic operators `+`, `-`, `*`, `/`, `//`, `%`, and `**`.
@@ -71,15 +71,26 @@ The order may change where dependencies demand it. In particular, implement enou
 - Established initial expression-parsing benchmarks for arithmetic, precedence, operator chains, and nested grouping.
 - Observed approximately linear execution-time and allocation scaling; no immediate production-code optimisation required.
 
-M1-P2 remains subject to documentation reconciliation, technical-backlog review, comprehensive validation, and Git checkpoint closure. Statement and complete-program parsing remain pending.
+**M1-P3 — Statements and program parsing: Implemented; checkpoint review in progress**
+
+- Implemented `let`, `change`, and `say` statement parsing, including delegation to the existing Pratt expression parser.
+- Implemented statement dispatch based on the initiating keyword.
+- Implemented complete-program parsing with ordered statements, newline separation, blank-line handling, and EOF termination.
+- Preserved statement and program source spans, including complete syntactic expression extents.
+- Added positive and negative tests for statement syntax, program structure, expression integration, and source locations.
+- Verified structured, fail-fast diagnostics for malformed statements, invalid statement starters, missing separators, and nested expression errors.
+- Completed implementation and architecture review without identifying blocking issues.
+- Completed performance review using 3-, 300-, and 3,000-statement workloads, observing approximately linear scaling and retaining benchmark results for future comparisons.
+- No production-code optimisation required at the current checkpoint.
+
+M1-P3 implementation, diagnostics, and initial performance review are complete. Documentation reconciliation, technical-backlog review, comprehensive validation, Git review, and checkpoint closure remain in progress.
 
 **Remaining M1 checkpoints**
 
-- **M1-P3 — Statements and program parsing:** Parse the initial `let`, `change`, and `say` statements into complete programs.
 - **M1-P4 — Syntax diagnostics and conformance:** Verify malformed syntax, source locations, and positive/negative grammar fixtures.
 - **M1-P5 — Frontend integration and milestone closure:** Complete lexer–parser integration, end-to-end tests, benchmarks, documentation, and release audit.
 
-M1 remains incomplete. Eloque does not yet parse complete programs or execute source code.
+M1 remains incomplete. Eloque can construct complete program ASTs from prepared token streams, but lexer–parser integration and source-program execution are not yet operational.
 
 ## Public release planning
 
@@ -182,7 +193,7 @@ Eloque intends to use Semantic Versioning as a guideline:
 - [x] Implement initial AST nodes and parser navigation infrastructure (M1-P1).
 - [x] Establish the initial structured, fail-fast parser diagnostic contract.
 - [x] Implement expression parsing with the agreed precedence and associativity rules (M1-P2).
-- [ ] Implement statement and complete-program parsing (M1-P3).
+- [x] Implement statement and complete-program parsing (M1-P3).
 - [ ] Complete syntax diagnostics and frontend conformance fixtures (M1-P4).
 - [ ] Integrate and validate the complete frontend (M1-P5).
 - [ ] Expand grammar and static-checking rules alongside subsequent executable features.
